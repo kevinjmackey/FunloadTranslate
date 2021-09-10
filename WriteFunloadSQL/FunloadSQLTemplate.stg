@@ -1,0 +1,103 @@
+﻿group FunloadSQL;
+
+fl_header(fl_file, generation_date, generation_time) ::= <<
+
+-- Source File        : <fl_file>
+-- Generated on       : <generation_date>:<generation_time>
+
+>>
+
+job_header(jobname, step, occurrance, mfd_tables) ::= <<
+
+-- Job                : <jobname>
+-- Step               : <step>
+<if(mfd_tables)>-- MFD Tables         : <mfd_tables; separator = ","><endif>
+-- Output File        : mcc<jobname>job_<step><if (occurrance)><occurrance><endif>.SQL
+
+
+>>
+
+assignment_statement(assignment_statements) ::= <<
+<assignment_statements:{e | SET @<e.lhs> = <e.rhs>}; separator = ";\n">
+
+
+>>
+
+condition(lparen, left_operand, operator, right_operand, rparen) ::= <<
+    <if (lparen)><lparen><endif><left_operand> <operator> <if (right_operand)><right_operand><endif><if (rparen)><rparen><endif>
+
+>>
+
+from(from) ::= <<
+<from>
+>>
+where_clause(select_case, where) ::= <<
+WHERE <if (select_case)><select_case> AND <endif><where>
+
+>>
+
+from_clause(baseTable, reoccurTable) ::= <<
+FROM [THB].[<baseTable>] AS [base]
+<if (reoccurTable)>LEFT OUTER JOIN [THB].[<reoccurTable>] AS [reoccur] ON [base].[RECORD_KEY] = [reoccur].[RECORD_KEY]<endif>
+
+>>
+
+occurs_clause(from, where, occno) ::= <<
+<from><where> <if(occno)>[ireoccur].[OCCNO] = <occno> AND <endif>[ibase].[RECORD_KEY] = [base].[RECORD_KEY]
+>>
+
+output_value(position, value, length, missing_value) ::= <<
+[P<position>] = CAST(<if(missing_value)>ISNULL(<endif><value><if(missing_value)> ,<missing_value>)<endif> AS CHAR(<length>))
+>>
+
+output_value_occurs(position, value, length, missing_value, occurs_clause) ::= <<
+[P<position>] = (SELECT CAST(<if(missing_value)>ISNULL(<endif><value><if(missing_value)> ,<missing_value>)<endif> AS CHAR(<length>)) <occurs_clause>)
+>>
+
+select_statement(output_list) ::= <<
+SELECT <output_list:{e | <e.outputString>}; separator = ",\n">
+
+>>
+
+select_statement_outer(output_list) ::= <<
+SELECT CONCAT(<output_list:{e | [P<e.position>]}; separator = ",">)
+FROM
+(
+
+>>
+
+select_statement_outer_close(table_number) ::= <<
+
+) AS [<table_number>]
+
+
+>>
+
+sfs(text) ::= <<
+
+-- <text>
+-- No information in the funload script exists to know what this means
+
+>>
+
+uai(m204File) ::= <<
+
+--Unload all information (UAI) for
+--M204 File: <m204File>
+
+--Unsure how this should translate to SQL
+
+>>
+
+union_clause() ::= <<
+
+UNION ALL
+
+
+>>
+
+variable_def(variables) ::= <<
+<variables:{e | DECLARE @<e.name> <e.datatype>}; separator = ";\n">
+
+
+>>
