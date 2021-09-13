@@ -310,6 +310,30 @@ namespace FunloadTranslate
                     constant.Parent = _currentParent;
                     _currentParent.AddChild(constant);
                 }
+                if (child.GetType() == typeof(FunloadParser.RecinContext))
+                {
+                    uast.UastNode recin = new UastNode();
+                    FunloadParser.RecinContext constantCtx = (FunloadParser.RecinContext)child;
+
+                    recin.Token = constantCtx.GetText();
+                    recin.InternalType = "fl:Recin";
+                    recin.AddRole(Role.FUNCTION);
+                    recin.AddProperty("output", "true");
+                    recin.Parent = _currentParent;
+                    _currentParent.AddChild(recin);
+                }
+                if (child.GetType() == typeof(FunloadParser.FilenameContext))
+                {
+                    uast.UastNode recin = new UastNode();
+                    FunloadParser.FilenameContext constantCtx = (FunloadParser.FilenameContext)child;
+
+                    recin.Token = constantCtx.GetText();
+                    recin.InternalType = "fl:Filename";
+                    recin.AddRole(Role.FUNCTION);
+                    recin.AddProperty("output", "true");
+                    recin.Parent = _currentParent;
+                    _currentParent.AddChild(recin);
+                }
                 if (child.GetType() == typeof(FunloadParser.IdentifierContext))
                 {
                     uast.UastNode ident = new UastNode();

@@ -28,6 +28,10 @@ condition(lparen, left_operand, operator, right_operand, rparen) ::= <<
 
 >>
 
+filename_function(position, value, length) ::= <<
+[P<position>] = CAST(<value> as CHAR(<length>))
+>>
+
 from(from) ::= <<
 <from>
 >>
@@ -52,6 +56,10 @@ output_value(position, value, length, missing_value) ::= <<
 
 output_value_occurs(position, value, length, missing_value, occurs_clause) ::= <<
 [P<position>] = (SELECT CAST(<if(missing_value)>ISNULL(<endif><value><if(missing_value)> ,<missing_value>)<endif> AS CHAR(<length>)) <occurs_clause>)
+>>
+
+recin_function(position, value, length) ::= <<
+[P<position>] = CAST('<value>' as CHAR(<length>)) --SQL Server does not have a direct equivalent for this special funload function
 >>
 
 select_statement(output_list) ::= <<

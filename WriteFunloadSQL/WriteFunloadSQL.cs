@@ -450,6 +450,20 @@ namespace FunloadTranslate
                         outputConstantTemplate.Add("length", output.length);
                         output.outputString = outputConstantTemplate.Render();
                         break;
+                    case "recin":
+                        Template outputRecinTemplate = _stg.GetInstanceOf("recin_function");
+                        outputRecinTemplate.Add("position", output.position);
+                        outputRecinTemplate.Add("value", output.value);
+                        outputRecinTemplate.Add("length", output.length);
+                        output.outputString = outputRecinTemplate.Render();
+                        break;
+                    case "filename":
+                        Template outputFilenameTemplate = _stg.GetInstanceOf("filename_function");
+                        outputFilenameTemplate.Add("position", output.position);
+                        outputFilenameTemplate.Add("value", _table.TableName);
+                        outputFilenameTemplate.Add("length", output.length);
+                        output.outputString = outputFilenameTemplate.Render();
+                        break;
                 }
             }
             List<OutputValue> sortedResult = result.OrderBy(o => o.position).ToList();
@@ -460,7 +474,7 @@ namespace FunloadTranslate
                     sortedResult.Add(new OutputValue()
                     {
                         position = 1,
-                        value = $"SPACE({sortedResult[1].position - 1})",
+                        value = $"SPACE({sortedResult[0].position - 1})",
                         length = sortedResult[1].position - 1,
                         outputType = "constant",
                         outputString = $"[P1] = SPACE({sortedResult[1].position - 1})"
@@ -525,6 +539,18 @@ namespace FunloadTranslate
                             outputValue.value = child.RawToken;
                             outputValue.name = child.RawToken;
                             outputValue.missingValue = child.RawToken;
+                            outputValue.occurs = false;
+                            outputValue.occno = -1;
+                            break;
+                        case "fl:Recin":
+                            outputValue.outputType = "recin";
+                            outputValue.value = child.RawToken;
+                            outputValue.occurs = false;
+                            outputValue.occno = -1;
+                            break;
+                        case "fl:Filename":
+                            outputValue.outputType = "filename";
+                            outputValue.value = child.RawToken;
                             outputValue.occurs = false;
                             outputValue.occno = -1;
                             break;
