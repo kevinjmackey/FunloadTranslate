@@ -402,6 +402,22 @@ namespace FunloadTranslate
         {
             _currentParent = (UastNode)_parentStack.Pop();
         }
+        public override void EnterSort_statement([NotNull] FunloadParser.Sort_statementContext context) 
+        {
+            UastNode node = new UastNode();
+            node.InternalType = "fl:Sort";
+            node.Token = context.children[1].GetText();
+            node.AddRole(Role.SORT);
+            node.Parent = _currentParent;
+            _currentParent.AddChild(node);
+
+            _parentStack.Push(_currentParent);
+            _currentParent = node;
+        }
+        public override void ExitSort_statement([NotNull] FunloadParser.Sort_statementContext context)
+        {
+            _currentParent = (UastNode)_parentStack.Pop();
+        }
         public override void EnterWhen_clause([NotNull] FunloadParser.When_clauseContext context) 
         {
             string whenValue = "";
@@ -531,6 +547,7 @@ namespace FunloadTranslate
                     uast.UastNode node = new UastNode();
                     node.InternalType = "fl:Condition";
                     node.AddRole(Role.CONDITION);
+                    node.AddRole(Role.FILTER);
                     node.Parent = _currentParent;
                     _currentParent.AddChild(node);
 

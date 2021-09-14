@@ -10,8 +10,6 @@ namespace FunloadTranslate
     {
         [Option('i', "input", Required = true, HelpText = "The Funload file to translate")]
         public string InputFile { get; set; }
-        [Option('o', "output", Required = false, HelpText = "The translated SQL output file")]
-        public string OutputFile { get; set; }
     }
     class FunloadTranslate
     {
@@ -23,7 +21,6 @@ namespace FunloadTranslate
                     .WithParsed<Options>(o =>
                     {
                         inputFile = o.InputFile;
-                        outputFile = (o.OutputFile != null) ? o.OutputFile : "";
                     });
             if (!File.Exists(inputFile))
             {
@@ -33,9 +30,10 @@ namespace FunloadTranslate
             if (outputFile.Length == 0)
             {
                 string outputDir = $"{Path.GetDirectoryName(Path.GetFullPath(inputFile))}{Path.DirectorySeparatorChar.ToString()}";
-                outputFile = $"{outputDir}{Path.GetFileNameWithoutExtension(inputFile)}.sql";
+                outputFile = $"{outputDir}{Path.GetFileNameWithoutExtension(inputFile)}.JSON";
             }
-            System.Console.WriteLine($"Input file: {inputFile} \nOutput File: {outputFile}");
+            System.Console.WriteLine($"Input file: {inputFile} \nMetadata File: {outputFile}");
+            System.Console.WriteLine($"Translation started at: {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}");
             FLParse flp = new FLParse();
             if (flp.ParseFile(inputFile))
             {
@@ -44,6 +42,7 @@ namespace FunloadTranslate
                 WriteFunloadSQL wfs = new WriteFunloadSQL();
                 Console.WriteLine("Generating SQL files...");
                 wfs.WriteSQL(flp.Ast, $"{Path.GetDirectoryName(Path.GetFullPath(inputFile))}{Path.DirectorySeparatorChar.ToString()}");
+                System.Console.WriteLine($"Translation ended at: {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}");
             }
             else
             {

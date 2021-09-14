@@ -29,15 +29,11 @@ condition(lparen, left_operand, operator, right_operand, rparen) ::= <<
 >>
 
 filename_function(position, value, length) ::= <<
-[P<position>] = CAST(<value> as CHAR(<length>))
+[P<position>] = CAST('<value>' as CHAR(<length>))
 >>
 
 from(from) ::= <<
 <from>
->>
-where_clause(select_case, where) ::= <<
-WHERE <if (select_case)><select_case> AND <endif><where>
-
 >>
 
 from_clause(baseTable, reoccurTable) ::= <<
@@ -59,7 +55,7 @@ output_value_occurs(position, value, length, missing_value, occurs_clause) ::= <
 >>
 
 recin_function(position, value, length) ::= <<
-[P<position>] = CAST('<value>' as CHAR(<length>)) --SQL Server does not have a direct equivalent for this special funload function
+[P<position>] = CAST('<value>' as CHAR(<length>))
 >>
 
 select_statement(output_list) ::= <<
@@ -68,16 +64,27 @@ SELECT <output_list:{e | <e.outputString>}; separator = ",\n">
 >>
 
 select_statement_outer(output_list) ::= <<
-SELECT CONCAT(<output_list:{e | [P<e.position>]}; separator = ",">)
+SELECT CONCAT(<output_list:{e | [P<e.position>]}; separator = ",">) AS [RESULT]
 FROM
 (
 
 >>
 
 select_statement_outer_close(table_number) ::= <<
-
 ) AS [<table_number>]
 
+>>
+
+select_statement_sorted_open() ::= <<
+SELECT [RESULT].[RESULT]
+FROM
+(
+
+>>
+
+select_statement_sorted_close(order_by) ::= <<
+) AS [RESULT]
+ORDER BY <order_by:{e | SUBSTRING([SORTED].[RESULT], <e.start>,<e.length>) <e.order>}; separator = ",">
 
 >>
 
@@ -99,6 +106,7 @@ uai(m204File) ::= <<
 
 union_clause() ::= <<
 
+
 UNION ALL
 
 
@@ -109,3 +117,7 @@ variable_def(variables) ::= <<
 
 
 >>
+where_clause(select_case, where) ::= <<
+WHERE <if (select_case)><select_case> AND <endif><where>
+>>
+

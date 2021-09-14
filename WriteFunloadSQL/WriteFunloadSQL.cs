@@ -52,6 +52,12 @@ namespace FunloadTranslate
         public int occno { get; set; }
         public string outputString { get; set; }
     }
+    public class SortValue
+    {
+        public int start { get; set; }
+        public int length { get; set; }
+        public string order { get; set; }
+    }
     public class WriteFunloadSQL
     {
         private Antlr4.StringTemplate.TemplateGroup stg;
@@ -69,12 +75,15 @@ namespace FunloadTranslate
         private List<UastNode> ifStatementList = new List<UastNode>();
         private List<UastNode> conditionList = new List<UastNode>();
         private List<UastNode> assignmentStatementList = new List<UastNode>();
+        private List<UastNode> sortStatementList = new List<UastNode>();
         private List<M204FileDTO> m204FileList = new List<M204FileDTO>();
         private List<MFDTableDTO> mfdTables = new List<MFDTableDTO>();
         private List<MFDTableColumnDTO> mfdColumnList = new List<MFDTableColumnDTO>();
         private List<OutputValue> outputValues = new List<OutputValue>();
         private List<VariableType> variables = new List<VariableType>();
         private List<OutputValue> outputList = new List<OutputValue>();
+        private List<SortValue> sortValuesList = new List<SortValue>();
+        private bool sortBySubstring = false;
 
         public WriteFunloadSQL()
         {
@@ -86,6 +95,7 @@ namespace FunloadTranslate
         private void LoadM205FileDictionary()
         {
             m204FilesDictionary["BUS"] = "BUS";
+            m204FilesDictionary["BSP"] = "BSP";
             m204FilesDictionary["BSRA"] = "BSR";
             m204FilesDictionary["BSRB"] = "BSR";
             m204FilesDictionary["BSRC"] = "BSR";
@@ -138,22 +148,64 @@ namespace FunloadTranslate
             m204FilesDictionary["BSRHS34"] = "BSR_HIST";
             m204FilesDictionary["BSRHS35"] = "BSR_HIST";
             m204FilesDictionary["BSRHS36"] = "BSR_HIST";
+            m204FilesDictionary["CARE"] = "CARE";
+            m204FilesDictionary["CAR"] = "CAR";
             m204FilesDictionary["CARS"] = "CARS";
+            m204FilesDictionary["CCD"] = "CCD";
+            m204FilesDictionary["CCS"] = "CCS";
             m204FilesDictionary["CIF"] = "CIF";
+            m204FilesDictionary["CINV"] = "CINV";
+            m204FilesDictionary["COLC"] = "COLC";
+            m204FilesDictionary["COLE"] = "COLE";
+            m204FilesDictionary["COLM"] = "COLM";
+            m204FilesDictionary["CRND"] = "CRN";
+            m204FilesDictionary["CRNI"] = "CRN";
+            m204FilesDictionary["CUR"] = "CUR";
             m204FilesDictionary["ECP"] = "ECP";
             m204FilesDictionary["ECM"] = "ECM";
-            m204FilesDictionary["RDWAPSY"] = "RDWAPSY";
+            m204FilesDictionary["EQP"] = "EQP";
             m204FilesDictionary["EQPSTAT"] = "EQPSTAT";
+            m204FilesDictionary["GBL"] = "GBL";
+            m204FilesDictionary["INV"] = "INV";
+            m204FilesDictionary["INVB"] = "INV";
+            m204FilesDictionary["INVC"] = "INV";
+            m204FilesDictionary["INVCAFA"] = "INVCAF";
+            m204FilesDictionary["INVCAFB"] = "INVCAF";
             m204FilesDictionary["OSDD"] = "OSDD";
             m204FilesDictionary["OSDE"] = "OSDE";
+            m204FilesDictionary["RDWAPSY"] = "RDWAPSY";
+            m204FilesDictionary["SHPA"] = "SHP";
+            m204FilesDictionary["SHPH"] = "SHP";
+            m204FilesDictionary["SHPI"] = "SHP";
+            m204FilesDictionary["TBL"] = "TBL";
+            m204FilesDictionary["WGP"] = "WGP";
+            m204FilesDictionary["WGPA"] = "WGP";
+            m204FilesDictionary["WGPB"] = "WGP";
+            m204FilesDictionary["WGPC"] = "WGP";
+            m204FilesDictionary["WGPD"] = "WGP";
+            m204FilesDictionary["WGPE"] = "WGP";
+            m204FilesDictionary["WGPF"] = "WGP";
+            m204FilesDictionary["WGPG"] = "WGP";
+            m204FilesDictionary["WGPH"] = "WGP";
+            m204FilesDictionary["WGPI"] = "WGP";
+            m204FilesDictionary["WGPJ"] = "WGP";
+            m204FilesDictionary["WGPK"] = "WGP";
+            m204FilesDictionary["WGPL"] = "WGP";
+            m204FilesDictionary["WGPM"] = "WGP";
+            m204FilesDictionary["WGPN"] = "WGP";
+            m204FilesDictionary["WGPO"] = "WGP";
+            m204FilesDictionary["WGPP"] = "WGP";
+            m204FilesDictionary["XORZ"] = "XORZ";
         }
         private void LoadConditionalOperatorsDictionary()
         {
             conditionalOperators["NE"] = "<>";
+            conditionalOperators["EQ"] = "=";
             conditionalOperators["LE"] = "<=";
             conditionalOperators["LT"] = "<";
             conditionalOperators["GE"] = ">=";
             conditionalOperators["GT"] = ">";
+            conditionalOperators["^="] = "<>";
             conditionalOperators["MISSING"] = "IS NULL";
             conditionalOperators["EXISTS"] = "IS NOT NULL";
         }
@@ -648,25 +700,50 @@ namespace FunloadTranslate
             }
             return sb.ToString();
         }
+        private List<SortValue> GetSortValues(List<UastNode> _sortStatementList)
+        {
+            List<SortValue> result = new List<SortValue>();
+            foreach(UastNode sortStatement in _sortStatementList)
+            {
+                if(sortStatement.RawToken == "FIELDS" && int.TryParse(sortStatement.FirstChild().RawToken, out _) == true)
+                {
+                    sortBySubstring = true;
+                    for(int i = 0; i < sortStatement.ChildCount; i = i + 4)
+                    {
+                        result.Add(new SortValue()
+                        {
+                            start = int.Parse(sortStatement.Children[i].RawToken),
+                            length = int.Parse(sortStatement.Children[i + 1].RawToken),
+                            order = (sortStatement.Children[i + 3].RawToken == "A" ? "ASC" : "DESC")
+                        });
+
+                    }
+                }
+            }
+            return result;
+        }
         private void WalkTheTree(UastNode _node)
         {
             switch (_node.RawInternalType)
             {
+                case "fl:Assignment":
+                    assignmentStatementList.Add(_node);
+                    break;
+                case "fl:Case":
+                    whenConditions[selectColumn].Add(_node.GetProperty("value"));
+                    break;
+                case "fl:Condition":
+                    conditionList.Add(_node);
+                    break;
+                case "fl:If":
+                    ifStatementList.Add(_node);
+                    break;
                 case "fl:Job":
                     if(_node.HasProperty("m204File"))
                         fileGroups.AddRange(_node.GetProperty("m204File").Split(","));
                     break;
                 case "fl:Put":
                     putStatementList.Add(_node);
-                    break;
-                case "fl:If":
-                    ifStatementList.Add(_node);
-                    break;
-                case "fl:Assignment":
-                    assignmentStatementList.Add(_node);
-                    break;
-                case "fl:Condition":
-                    conditionList.Add(_node);
                     break;
                 case "fl:Output":
                     if (!outputFileList.Contains(_node.GetProperty("funout")))
@@ -676,8 +753,8 @@ namespace FunloadTranslate
                     selectColumn = _node.GetProperty("selectIdentifier").Replace(".", "_").Replace("%", "");
                     whenConditions[selectColumn] = new List<string>();
                     break;
-                case "fl:Case":
-                    whenConditions[selectColumn].Add(_node.GetProperty("value"));
+                case "fl:Sort":
+                    sortStatementList.Add(_node);
                     break;
             }
             foreach (var child in _node.Children)
@@ -701,6 +778,9 @@ namespace FunloadTranslate
             mfdTables.Clear();
             selectColumn = "";
             whenConditions.Clear();
+            sortStatementList.Clear();
+            sortValuesList.Clear();
+            sortBySubstring = false;
 
             WalkTheTree(_jobNode);
 
@@ -729,6 +809,7 @@ namespace FunloadTranslate
                 mfdColumnList = GetMFDColumnMetadata(mfdTables, rectypeValues, metadata);
                 outputValues = GetOutputValues(putStatementList);
                 variables = GetVariables(_jobNode);
+                sortValuesList = GetSortValues(sortStatementList);
             }
         }
         private void ProcessJob(string _headerText, UastNode _jobNode, string _outputFolder, TemplateGroup _stg)
@@ -803,6 +884,12 @@ namespace FunloadTranslate
                     }
                     outputList = GetOutputValuesForSelect(outputValues, table, _stg, m204FileContainsRectypes, mainConditions);
 
+                    if(sortBySubstring == true)
+                    {
+                        Template sortedOpenTemplate = _stg.GetInstanceOf("select_statement_sorted_open");
+                        sb.Append(sortedOpenTemplate.Render());
+                    }
+
                     Template selectTemplate = _stg.GetInstanceOf("select_statement_outer");
                     selectTemplate.Add("output_list", outputList);
                     sb.Append(selectTemplate.Render());
@@ -827,6 +914,13 @@ namespace FunloadTranslate
                     if (tables < mfdTables.Count)
                         sb.Append(unionText);
                 }
+                if (sortBySubstring == true)
+                {
+                    Template sortedCloseTemplate = _stg.GetInstanceOf("select_statement_sorted_close");
+                    sortedCloseTemplate.Add("order_by", sortValuesList);
+                    sb.Append(sortedCloseTemplate.Render());
+                }
+
                 foreach (var child in _jobNode.Children)
                 {
                     

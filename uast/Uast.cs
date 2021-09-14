@@ -379,7 +379,11 @@ namespace uast
         // Constant is any string or numeric constant
         CONSTANT = 145,
         // Operand is any operand forming part of an expression
-        OPERAND = 146
+        OPERAND = 146,
+        // Filter is any predicate or condition used to reduce a set of data
+        FILTER = 147,
+        // SORT is any operation or clause used to order a set of data
+        SORT = 148
     }
     public class UastNode
     {
