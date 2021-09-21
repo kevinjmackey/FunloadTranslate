@@ -460,6 +460,8 @@ namespace FunloadTranslate
                 {
                     case "field":
                         output.value = GetColumn((output.name.Contains("(") == true ? StringExtensions.Left(output.name, output.name.IndexOf("(")) : output.name), _table);
+                        output.occurs = (output.value.StartsWith("[reoccur]") ? true : false);
+                        output.occno = (output.occno > 0 ? output.occno : 0);
                         if (output.occurs == false)
                         {
                             Template outputFieldTemplate = _stg.GetInstanceOf("output_value");
@@ -473,15 +475,20 @@ namespace FunloadTranslate
                         else
                         {
                             Template occursTemplate = _stg.GetInstanceOf("occurs_clause");
-                            occursTemplate.Add("from", _table.FromCaluse.Replace("[base]","[ibase]").Replace("[reoccur]","[ireoccur]"));
+                            occursTemplate.Add("from", _table.FromCaluse.Replace("[base]","[ibase]"));
+                            occursTemplate.Add("join", _table.JoinCaluse.Replace("[reoccur]", "[ireoccur]"));
                             occursTemplate.Add("where", (_mainConditions.Length > 0 ? $"WHERE {_mainConditions.Replace("[base]", "[ibase]").Replace("[reoccur]", "[ireoccur]")} AND" : "WHERE"));
-                            if(output.occno > -1)
+                            if (output.occno > 0)
                                 occursTemplate.Add("occno", output.occno);
+                            else
+                                occursTemplate.Add("value", output.value.Replace("[reoccur]", "[ireoccur]"));
 
                             Template outputReoccurTemplate = _stg.GetInstanceOf("output_value_occurs");
                             outputReoccurTemplate.Add("position", output.position);
-                            outputReoccurTemplate.Add("value", output.value);
+                            outputReoccurTemplate.Add("value", output.value.Replace("[reoccur]","[ireoccur]"));
                             outputReoccurTemplate.Add("length", output.length);
+                            if (output.occno == 0)
+                                outputReoccurTemplate.Add("top", "1");
                             if (output.missingValue.Length > 0)
                                 outputReoccurTemplate.Add("missing_value", output.missingValue);
                             outputReoccurTemplate.Add("occurs_clause", occursTemplate.Render());
@@ -617,11 +624,15 @@ namespace FunloadTranslate
             Dictionary<string, MFDTableDTO> fromClauses = new Dictionary<string, MFDTableDTO>();
             foreach(MFDTableDTO table in _mfdTables)
             {
-                Template fromClauseTemplate = _stg.GetInstanceOf("from_clause");
+                Template fromClauseTemplate = _stg.GetInstanceOf("from_main_clause");
                 fromClauseTemplate.Add("baseTable", table.TableName);
-                if(table.ReoccurTableName != "")
-                    fromClauseTemplate.Add("reoccurTable", table.ReoccurTableName);
                 table.FromCaluse = fromClauseTemplate.Render();
+                if (table.ReoccurTableName != "")
+                {
+                    Template joinTemplate = _stg.GetInstanceOf("from_reoccur_clause");
+                    joinTemplate.Add("reoccurTable", table.ReoccurTableName);
+                    table.JoinCaluse = joinTemplate.Render();
+                }
                 fromClauses[table.TableName] = table;
             }
             return fromClauses;

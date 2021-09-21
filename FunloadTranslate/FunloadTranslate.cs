@@ -37,7 +37,7 @@ namespace FunloadTranslate
             FLParse flp = new FLParse();
             if (flp.ParseFile(inputFile))
             {
-                Console.WriteLine("Parsing went well!");
+                Console.WriteLine("Parsing went well!"); 
                 flp.DumpAst($"{Path.GetDirectoryName(Path.GetFullPath(inputFile))}{Path.DirectorySeparatorChar.ToString()}{Path.GetFileNameWithoutExtension(outputFile)}.JSON");
                 WriteFunloadSQL wfs = new WriteFunloadSQL();
                 Console.WriteLine("Generating SQL files...");

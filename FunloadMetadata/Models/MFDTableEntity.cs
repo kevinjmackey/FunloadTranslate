@@ -20,6 +20,7 @@ namespace FunloadMetadata.Models
         public string ReoccurTableName { get; set; }
         public string Rectype { get; set; }
         public string FromCaluse { get; set; }
+        public string JoinCaluse { get; set; }
 
     }
 }

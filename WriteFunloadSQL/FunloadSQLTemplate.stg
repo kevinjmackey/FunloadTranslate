@@ -32,26 +32,31 @@ filename_function(position, value, length) ::= <<
 [P<position>] = CAST('<value>' as CHAR(<length>))
 >>
 
-from(from) ::= <<
+from(from, join) ::= <<
 <from>
+<if(join)><join><endif>
 >>
 
-from_clause(baseTable, reoccurTable) ::= <<
+from_main_clause(baseTable) ::= <<
 FROM [THB].[<baseTable>] AS [base]
-<if (reoccurTable)>LEFT OUTER JOIN [THB].[<reoccurTable>] AS [reoccur] ON [base].[RECORD_KEY] = [reoccur].[RECORD_KEY]<endif>
 
 >>
 
-occurs_clause(from, where, occno) ::= <<
-<from><where> <if(occno)>[ireoccur].[OCCNO] = <occno> AND <endif>[ibase].[RECORD_KEY] = [base].[RECORD_KEY]
+from_reoccur_clause(reoccurTable) ::= <<
+LEFT OUTER JOIN [THB].[<reoccurTable>] AS [reoccur] ON [base].[RECORD_KEY] = [reoccur].[RECORD_KEY]
+
+>>
+
+occurs_clause(from, join, where, occno, value) ::= <<
+<from><join><where> [ibase].[RECORD_KEY] = [base].[RECORD_KEY] AND <if(occno)>[ireoccur].[OCCNO] = <occno><else><value> IS NOT NULL<endif>
 >>
 
 output_value(position, value, length, missing_value) ::= <<
 [P<position>] = CAST(<if(missing_value)>ISNULL(<endif><value><if(missing_value)> ,<missing_value>)<endif> AS CHAR(<length>))
 >>
 
-output_value_occurs(position, value, length, missing_value, occurs_clause) ::= <<
-[P<position>] = (SELECT CAST(<if(missing_value)>ISNULL(<endif><value><if(missing_value)> ,<missing_value>)<endif> AS CHAR(<length>)) <occurs_clause>)
+output_value_occurs(top, position, value, length, missing_value, occurs_clause) ::= <<
+[P<position>] = (SELECT <if(top)>TOP(<top>) <endif>CAST(<if(missing_value)>ISNULL(<endif><value><if(missing_value)> ,<missing_value>)<endif> AS CHAR(<length>)) <occurs_clause>)
 >>
 
 recin_function(position, value, length) ::= <<
