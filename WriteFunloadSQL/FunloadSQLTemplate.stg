@@ -69,7 +69,7 @@ SELECT <output_list:{e | <e.outputString>}; separator = ",\n">
 >>
 
 select_statement_outer(output_list) ::= <<
-SELECT CONCAT(<output_list:{e | [P<e.position>]}; separator = ",">) AS [RESULT]
+SELECT CONCAT(<output_list:{e | ISNULL([P<e.position>],SPACE(<e.length>))}; separator = ",">) AS [RESULT]
 FROM
 (
 
