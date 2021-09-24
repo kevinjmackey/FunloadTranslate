@@ -528,16 +528,28 @@ namespace FunloadTranslate
             List<OutputValue> sortedResult = result.OrderBy(o => o.position).ToList();
             if(sortedResult.Count > 0)
             {
-                if (sortedResult[0].position != 1)
+                List<OutputValue> gapFillers = new List<OutputValue>();
+                int previousPosition = 1;
+                int previousLength = 0;
+                foreach(OutputValue output in sortedResult)
                 {
-                    sortedResult.Add(new OutputValue()
+                    if(output.position > previousPosition + previousLength)
                     {
-                        position = 1,
-                        value = $"SPACE({sortedResult[0].position - 1})",
-                        length = sortedResult[1].position - 1,
-                        outputType = "constant",
-                        outputString = $"[P1] = SPACE({sortedResult[1].position - 1})"
-                    });
+                        gapFillers.Add(new OutputValue()
+                        {
+                            position = previousPosition + previousLength,
+                            value = $"SPACE({output.position - (previousPosition + previousLength)})",
+                            length = output.position - (previousPosition + previousLength),
+                            outputType = "constant",
+                            outputString = $"[P{previousPosition + previousLength}] = SPACE({output.position - (previousPosition + previousLength)})"
+                        });
+                        previousPosition = output.position;
+                        previousLength = output.length;
+                    }
+                }
+                if(gapFillers.Count > 0)
+                {
+                    sortedResult.AddRange(gapFillers);
                 }
             }
             return sortedResult.OrderBy(o => o.position).ToList();
