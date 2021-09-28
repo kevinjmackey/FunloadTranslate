@@ -31,6 +31,7 @@ namespace FunloadMetadata.Models
         public string DWSchemaName { get; set; }
         public string TableName { get; set; }
         public string ColumnName { get; set; }
+        public string SqlType { get; set; }
         public string RecordType { get; set; }
         public string HistoryTableName { get; set; }
         public bool Occurs { get; set; }

@@ -113,6 +113,7 @@ namespace FunloadTranslate
                     DWSchemaName = entity.DWSchemaName,
                     TableName = entity.TableName,
                     ColumnName = entity.ColumnName,
+                    SqlType = entity.SqlType,
                     RecordType = entity.RecordType,
                     HistoryTableName = entity.HistoryTableName,
                     Occurs = (entity.TableName.Contains("REOCCUR") ? true : false),

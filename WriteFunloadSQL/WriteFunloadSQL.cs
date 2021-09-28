@@ -419,6 +419,12 @@ namespace FunloadTranslate
             }
             return statements;
         }
+        private string AddDateFormat(string _dateValue, TemplateGroup _stg)
+        {
+            Template dateFormatTemplate = _stg.GetInstanceOf("date_format");
+            dateFormatTemplate.Add("date", _dateValue);
+            return dateFormatTemplate.Render();
+        }
         private List<OutputValue> GetOutputValuesForSelect(List<OutputValue> _outputValues, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes, string _mainConditions)
         {
             List<OutputValue> result;
@@ -460,13 +466,14 @@ namespace FunloadTranslate
                 {
                     case "field":
                         output.value = GetColumn((output.name.Contains("(") == true ? StringExtensions.Left(output.name, output.name.IndexOf("(")) : output.name), _table);
+                        output.dataType = GetColumnDataType((output.name.Contains("(") == true ? StringExtensions.Left(output.name, output.name.IndexOf("(")) : output.name), _table);
                         output.occurs = (output.value.StartsWith("[reoccur]") ? true : false);
                         output.occno = (output.occno > 0 ? output.occno : 0);
                         if (output.occurs == false)
                         {
                             Template outputFieldTemplate = _stg.GetInstanceOf("output_value");
                             outputFieldTemplate.Add("position", output.position);
-                            outputFieldTemplate.Add("value", output.value);
+                            outputFieldTemplate.Add("value", (output.dataType.StartsWith("DATE") ? AddDateFormat(output.value, _stg) : output.value));
                             outputFieldTemplate.Add("length", output.length);
                             if (output.missingValue.Length > 0)
                                 outputFieldTemplate.Add("missing_value", output.missingValue);
@@ -485,7 +492,7 @@ namespace FunloadTranslate
 
                             Template outputReoccurTemplate = _stg.GetInstanceOf("output_value_occurs");
                             outputReoccurTemplate.Add("position", output.position);
-                            outputReoccurTemplate.Add("value", output.value.Replace("[reoccur]","[ireoccur]"));
+                            outputReoccurTemplate.Add("value", (output.dataType.StartsWith("DATE") ? AddDateFormat(output.value, _stg) : output.value).Replace("[reoccur]", "[ireoccur]"));
                             outputReoccurTemplate.Add("length", output.length);
                             if (output.occno == 0)
                                 outputReoccurTemplate.Add("top", "1");
@@ -648,6 +655,31 @@ namespace FunloadTranslate
                 fromClauses[table.TableName] = table;
             }
             return fromClauses;
+        }
+        private string GetColumnDataType(string _column, MFDTableDTO _table)
+        {
+            string result = "";
+            string columnName = (columnDictionary.ContainsKey(_column) ? columnDictionary[_column] : _column);
+            var columns = mfdColumnList.Where(c => c.ColumnName == columnName && c.TableName == _table.TableName);
+            foreach (var column in columns)
+            {
+                if (result == "")
+                {
+                    result = column.SqlType;
+                }
+            }
+            if (result == "")
+            {
+                columns = mfdColumnList.Where(c => c.ColumnName == _column && c.TableName == _table.ReoccurTableName);
+                foreach (var column in columns)
+                {
+                    if (result == "")
+                    {
+                        result = column.SqlType;
+                    }
+                }
+            }
+            return result;
         }
         private string GetColumn(string _column, MFDTableDTO _table)
         {

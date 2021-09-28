@@ -28,6 +28,10 @@ condition(lparen, left_operand, operator, right_operand, rparen) ::= <<
 
 >>
 
+date_format(date) ::= <<
+CONVERT(VARCHAR, <date>, 112)
+>>
+
 filename_function(position, value, length) ::= <<
 [P<position>] = CAST('<value>' as CHAR(<length>))
 >>
