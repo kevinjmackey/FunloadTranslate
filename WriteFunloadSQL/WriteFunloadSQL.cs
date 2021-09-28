@@ -917,6 +917,7 @@ namespace FunloadTranslate
                 }
                 foreach (MFDTableDTO table in mfdTables)
                 {
+                    bool reoccurInMainWhere = false;
                     Template whereTemplate = _stg.GetInstanceOf("where_clause");
                     Template conditionTemplate = _stg.GetInstanceOf("condition");
                     if (whenConditions.Count > 0)
@@ -935,6 +936,7 @@ namespace FunloadTranslate
                         if(mainConditions == "")
                         {
                             mainConditions = GetMainWHEREClause(ifStatementList[0], table, _stg, m204FileContainsRectypes);
+                            reoccurInMainWhere = (mainConditions.Contains("reoccur") ? true : false);
                         }
                     }
                     outputList = GetOutputValuesForSelect(outputValues, table, _stg, m204FileContainsRectypes, mainConditions);
@@ -955,6 +957,8 @@ namespace FunloadTranslate
 
                     Template fromTemplate = _stg.GetInstanceOf("from");
                     fromTemplate.Add("from", table.FromCaluse);
+                    if (reoccurInMainWhere == true)
+                        fromTemplate.Add("join", table.JoinCaluse);
                     sb.Append(fromTemplate.Render());
 
                     if (mainConditions.Length > 0)
