@@ -550,11 +550,11 @@ namespace FunloadTranslate
                             outputType = "constant",
                             outputString = $"[P{previousPosition + previousLength}] = SPACE({output.position - (previousPosition + previousLength)})"
                         });
-                        previousPosition = output.position;
-                        previousLength = output.length;
                     }
+                    previousPosition = output.position;
+                    previousLength = output.length;
                 }
-                if(gapFillers.Count > 0)
+                if (gapFillers.Count > 0)
                 {
                     sortedResult.AddRange(gapFillers);
                 }
