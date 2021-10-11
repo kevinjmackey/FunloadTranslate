@@ -84,6 +84,7 @@ namespace FunloadTranslate
         private List<OutputValue> outputList = new List<OutputValue>();
         private List<SortValue> sortValuesList = new List<SortValue>();
         private bool sortBySubstring = false;
+        private string previousConjuction = "";
 
         public WriteFunloadSQL()
         {
@@ -708,14 +709,13 @@ namespace FunloadTranslate
                 result = _column;
             return result;
         }
-        private string GetConditionText(UastNode _condition, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes)
+        private void GetConditionText(UastNode _condition, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes, LinkedList<string> _whereClauseElements)
         {
-            StringBuilder sb = new StringBuilder();
             if(!(_m204FileContainsRectypes == true && _condition.GetProperty("left_operand").Contains("RECTYPE")))
             {
                 Template conditionTemplate = _stg.GetInstanceOf("condition");
                 if (_condition.HasProperty("lparen"))
-                    conditionTemplate.Add("lparen", "(");
+                    _whereClauseElements.AddLast("(");
 
                 string leftOperand = _condition.GetProperty("left_operand").Replace(".", "_").Replace("%", "");
                 string column = GetColumn(leftOperand, _table);
@@ -727,32 +727,41 @@ namespace FunloadTranslate
                 if (_condition.HasProperty("right_operand"))
                     conditionTemplate.Add("right_operand", _condition.GetProperty("right_operand").Replace("%", "@"));
 
-                if (_condition.HasProperty("rparen"))
-                    conditionTemplate.Add("rparen", ")");
+                _whereClauseElements.AddLast(conditionTemplate.Render());
 
-                sb.Append(conditionTemplate.Render());
+                if (_condition.HasProperty("rparen"))
+                    _whereClauseElements.AddLast(")");
             }
-            return sb.ToString();
         }
-        private string GetMainWHEREClause(UastNode _ifStatement, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes)
+        private void GetWHEREConditions(UastNode _ifStatement, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes, LinkedList<string> _whereClauseElements)
         {
-            StringBuilder sb = new StringBuilder();
             foreach(var child in _ifStatement.Children)
             {
                 switch (child.RawInternalType)
                 {
                     case "fl:Conjunction":
-                        sb.Append($" {child.RawToken} ");
+                        _whereClauseElements.AddLast($" {child.RawToken} ");
                         break;
                     case "fl:If":
-                        sb.Append($" AND ");
-                        sb.Append(GetMainWHEREClause(child, _table, _stg, _m204FileContainsRectypes));
+                        _whereClauseElements.AddLast($" AND ");
+                        GetWHEREConditions(child, _table, _stg, _m204FileContainsRectypes, _whereClauseElements);
                         break;
                     case "fl:Condition":
-                        sb.Append(GetConditionText(child, _table, _stg, _m204FileContainsRectypes));
+                        GetConditionText(child, _table, _stg, _m204FileContainsRectypes, _whereClauseElements);
                         break;
                 }
             }
+        }
+        private string GetMainWhereClause(UastNode _ifStatement, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes)
+        {
+            int openParens = 0;
+            StringBuilder sb = new StringBuilder();
+            LinkedList<string> whereClauseElements = new LinkedList<string>();
+            GetWHEREConditions(_ifStatement, _table, stg, _m204FileContainsRectypes, whereClauseElements);
+            LinkedListNode<string> firstAND = whereClauseElements.Find(" AND ");
+            LinkedListNode<string> nextNode;
+            foreach (string element in whereClauseElements)
+                sb.Append(element);
             return sb.ToString();
         }
         private List<SortValue> GetSortValues(List<UastNode> _sortStatementList)
@@ -771,7 +780,6 @@ namespace FunloadTranslate
                             length = int.Parse(sortStatement.Children[i + 1].RawToken),
                             order = (sortStatement.Children[i + 3].RawToken == "A" ? "ASC" : "DESC")
                         });
-
                     }
                 }
             }
@@ -935,7 +943,8 @@ namespace FunloadTranslate
                     {
                         if(mainConditions == "")
                         {
-                            mainConditions = GetMainWHEREClause(ifStatementList[0], table, _stg, m204FileContainsRectypes);
+                            previousConjuction = "";
+                            mainConditions = GetMainWhereClause(ifStatementList[0], table, _stg, m204FileContainsRectypes);
                             reoccurInMainWhere = (mainConditions.Contains("reoccur") ? true : false);
                         }
                     }
