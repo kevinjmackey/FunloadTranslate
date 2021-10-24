@@ -160,6 +160,7 @@ namespace FunloadTranslate
         }
         public override void EnterAssignment_statement([NotNull] FunloadParser.Assignment_statementContext context)
         {
+            string possibleDataType = "";
             uast.UastNode node = new uast.UastNode();
             node.InternalType = "fl:Assignment";
             node.Token = "";
@@ -193,13 +194,16 @@ namespace FunloadTranslate
                 {
                     variable.AddProperty("value", child.GetText());
                 }
+                if (child.GetType() == typeof(FunloadParser.ConstantContext))
+                {
+                    variable.AddProperty("value", child.GetText());
+                }
                 if (child.GetType() == typeof(FunloadParser.Integer_valueContext))
                 {
                     variable.AddProperty("value", child.GetText());
                 }
                 if (child.GetType() == typeof(FunloadParser.FunctionContext))
                 {
-                    string possibleDataType = "";
                     if(child.GetText().StartsWith("#DATE"))
                     {
                         possibleDataType = "DATE";
@@ -212,15 +216,19 @@ namespace FunloadTranslate
                     {
                         possibleDataType = "VARCHAR(255)";
                     }
-                    if(!variable.HasProperty("datatype"))
-                    {
-                        variable.AddProperty("datatype", possibleDataType);
-                    }
                 }
                 if (child.GetType() == typeof(FunloadParser.ExpressionContext))
                 {
                     variable.AddProperty("datatype", "int");
                 }
+            }
+            if (possibleDataType == "")
+            {
+                possibleDataType = "VARCHAR(255)";
+            }
+            if (!variable.HasProperty("datatype"))
+            {
+                variable.AddProperty("datatype", possibleDataType);
             }
             node.AddProperty("operator", context.GetChild(1).GetText());
         }
@@ -437,7 +445,7 @@ namespace FunloadTranslate
                 _currentPrimaryConditions.CurrentRectype = whenValue.Replace("'","");
             }
             _currentPrimaryConditions.CurrentSelectValue = whenValue.Replace("'", "");
-            node.AddProperty("value", _currentPrimaryConditions.CurrentSelectValue);
+            node.AddProperty("value", whenValue);
 
             _parentStack.Push(_currentParent);
             _currentParent = node;

@@ -227,7 +227,7 @@ namespace FunloadTranslate
             functions["#TRANSLATE"] = "REPLACE";
             functions["#RECIN"] = "";
             functions["#LEN"] = "LEN";
-            functions["#SUBSTR"] = "SUBSTR";
+            functions["#SUBSTR"] = "SUBSTRING";
             functions["#CONCAT"] = "CONCAT";
             functions["#CONCAT_TRUNC"] = "CONCAT"; //with truncate to 255
             functions["#INDEX"] = "CHARINDEX";
@@ -287,6 +287,20 @@ namespace FunloadTranslate
                     mfdTableColumns.AddRange(_metadata.GetAzureMFDColumns(_metadata.MaxMetadataVersion, table.M204File, "No Rectype"));
             }
             return mfdTableColumns;
+        }
+        private VariableType GetExistingVariable(string _variableName)
+        {
+            VariableType variable = new VariableType();
+
+            foreach (VariableType existingVariable in variables)
+            {
+                if (existingVariable.name == _variableName)
+                {
+                    variable = existingVariable;
+                    break;
+                }
+            }
+            return variable;
         }
         private uast.UastNode GetVariablesCollection(UastNode _jobNode)
         {
@@ -379,9 +393,10 @@ namespace FunloadTranslate
             }
             return sb.ToString();
         }
-        private string RhsFunction(UastNode _function)
+        private string RhsFunction(UastNode _function, string _rhsDataType)
         {
             string rhs = "";
+            VariableType variable;
             string sqlFunction = functions[_function.RawToken];
             string[] args = _function.GetProperty("arguments").Replace("(","").Replace(")","").Split(",");
             switch (_function.RawToken)
@@ -393,10 +408,22 @@ namespace FunloadTranslate
                     rhs = $"CAST({args[2].Replace("%","@")} AS DATE)"; //#DATECNV is just a date formatting function (I believe)
                     break;
                 case "#DATECHG":
-                    rhs = $"{sqlFunction}(DD, {args[2]}, {args[1].Replace("%", "@")})"; //Translate to DATEDIFF
+                    rhs = $"{sqlFunction}(DD, {args[2].Replace("%", "@")}, {args[1].Replace("%", "@")})"; //Translate to DATEDIFF
+                    break;
+                case "#SUBSTR":
+                    variable = GetExistingVariable(args[0].Replace("%", ""));
+                    if (variable.datatype == "DATE")
+                        args[0] = $"CONVERT(VARCHAR(8), {args[0].Replace("%", "@")}, 112)";
+                    rhs = $"{sqlFunction}({args[0].Replace("%", "@")}, {args[1].Replace("%", "@")}, {args[2].Replace("%", "@")})";
+                    break;
+                case "#CONCAT":
+                    variable = GetExistingVariable(args[0].Replace("%", ""));
+                    if (variable.datatype == "DATE")
+                        args[0] = $"CONVERT(VARCHAR(8), {args[0].Replace("%", "@")}, 112)";
+                    rhs = $"{sqlFunction}({args[0].Replace("%", "@")}, {args[1].Replace("%", "@")}, {args[2].Replace("%", "@")})";
                     break;
             }
-            return rhs;
+            return (_rhsDataType == "DATE" ? $"CONVERT(VARCHAR(8), {rhs}, 112)" : rhs);
         }
         private List<AssignmentStatement> GetAssignments(List<UastNode> _assignmentStatements)
         {
@@ -404,15 +431,22 @@ namespace FunloadTranslate
             foreach(UastNode assignmentlStatement in _assignmentStatements)
             {
                 AssignmentStatement statement = new AssignmentStatement();
-                foreach(UastNode child in assignmentlStatement.Children)
+                VariableType variable = null;
+                foreach (UastNode child in assignmentlStatement.Children)
                 {
                     switch (child.RawInternalType)
                     {
                         case "fl:Variable":
                             statement.lhs = child.RawToken.Replace("%", "");
+                            if (child.HasProperty("value"))
+                                statement.rhs = child.GetProperty("value");
+                            variable = GetExistingVariable(child.RawToken.Replace("%", ""));
                             break;
                         case "fl:Function":
-                            statement.rhs = RhsFunction(child);
+                            statement.rhs = RhsFunction(child, (variable == null ? "" : variable.datatype));
+                            break;
+                        case "fl:Expression":
+                            statement.rhs = child.RawToken.Replace("%", "@");
                             break;
                     }
                 }
@@ -709,6 +743,17 @@ namespace FunloadTranslate
                 result = _column;
             return result;
         }
+        private string GetOccursCondition(string _leftOperand, MFDTableDTO _table, TemplateGroup _stg)
+        {
+            Template occursConditionTemplate = _stg.GetInstanceOf("occurs_condition");
+            string column = GetColumn((_leftOperand.Contains("(") == true ? StringExtensions.Left(_leftOperand, _leftOperand.IndexOf("(")) : _leftOperand), _table);
+            string occno = _leftOperand.Substring(_leftOperand.IndexOf("(") + 1, (_leftOperand.Length - (_leftOperand.IndexOf("(") + 2)));
+
+            occursConditionTemplate.Add("reoccurTable", _table.ReoccurTableName);
+            occursConditionTemplate.Add("column", column);
+            occursConditionTemplate.Add("occno", occno);
+            return occursConditionTemplate.Render();
+        }
         private void GetConditionText(UastNode _condition, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes, LinkedList<string> _whereClauseElements)
         {
             if(!(_m204FileContainsRectypes == true && _condition.GetProperty("left_operand").Contains("RECTYPE")))
@@ -718,8 +763,15 @@ namespace FunloadTranslate
                     _whereClauseElements.AddLast("(");
 
                 string leftOperand = _condition.GetProperty("left_operand").Replace(".", "_").Replace("%", "");
-                string column = GetColumn(leftOperand, _table);
-                conditionTemplate.Add("left_operand", column);
+                if(leftOperand.Contains("(") == true)
+                {
+                    conditionTemplate.Add("left_operand", GetOccursCondition(leftOperand, _table, _stg));
+                }
+                else
+                {
+                    string column = GetColumn(leftOperand, _table);
+                    conditionTemplate.Add("left_operand", column);
+                }
 
                 string op = (conditionalOperators.ContainsKey(_condition.GetProperty("operator")) ? conditionalOperators[_condition.GetProperty("operator")] : _condition.GetProperty("operator"));
                 conditionTemplate.Add("operator", op);
@@ -752,14 +804,57 @@ namespace FunloadTranslate
                 }
             }
         }
+        private void DumpConditionList(LinkedList<string> _whereClauseElements)
+        {
+            LinkedListNode<string> nextNode = _whereClauseElements.First;
+            while(nextNode != null)
+            {
+                System.Console.WriteLine(nextNode.Value);
+                nextNode = nextNode.Next;
+            }
+        }
         private string GetMainWhereClause(UastNode _ifStatement, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes)
         {
-            int openParens = 0;
             StringBuilder sb = new StringBuilder();
             LinkedList<string> whereClauseElements = new LinkedList<string>();
             GetWHEREConditions(_ifStatement, _table, stg, _m204FileContainsRectypes, whereClauseElements);
-            LinkedListNode<string> firstAND = whereClauseElements.Find(" AND ");
-            LinkedListNode<string> nextNode;
+            LinkedListNode<string> openingAND = whereClauseElements.Find(" AND ");
+            //DumpConditionList(whereClauseElements);
+            int parentheses = 0;
+            LinkedListNode<string> nextNode = (openingAND == null ? null : openingAND.Next);
+            while (nextNode != null)
+            {
+                switch (nextNode.Value)
+                {
+                    case "(":
+                        parentheses++;
+                        break;
+                    case ")":
+                        parentheses--;
+                        break;
+                    case " AND ":
+                        if (parentheses == 0)
+                            openingAND = nextNode;
+                        else if(parentheses == 1)
+                        {
+                            whereClauseElements.AddBefore(nextNode, new LinkedListNode<string>(")"));
+                            parentheses--;
+                            openingAND = nextNode;
+                        }
+                        break;
+                    case " OR ":
+                        if (parentheses == 0)
+                        {
+                            whereClauseElements.AddAfter(openingAND, new LinkedListNode<string>("("));
+                            parentheses++;
+                        }
+                        break;
+                }
+                nextNode = nextNode.Next;
+            }
+            if (parentheses == 1)
+                whereClauseElements.AddLast(")");
+
             foreach (string element in whereClauseElements)
                 sb.Append(element);
             return sb.ToString();
@@ -923,6 +1018,11 @@ namespace FunloadTranslate
                     assignmentTemplate.Add("assignment_statements", gblAssignments);
                     sb.Append(assignmentTemplate.Render());
                 }
+                if (sortBySubstring == true)
+                {
+                    Template sortedOpenTemplate = _stg.GetInstanceOf("select_statement_sorted_open");
+                    sb.Append(sortedOpenTemplate.Render());
+                }
                 foreach (MFDTableDTO table in mfdTables)
                 {
                     bool reoccurInMainWhere = false;
@@ -938,6 +1038,14 @@ namespace FunloadTranslate
                             conditionTemplate.Add("right_operand", whenConditions[selectColumn][0]);
                             whereTemplate.Add("select_case", conditionTemplate.Render());
                         }
+                        else if (!selectColumn.EndsWith("RECTYPE"))
+                        {
+                            string column = GetColumn(selectColumn, table);
+                            conditionTemplate.Add("left_operand", column);
+                            conditionTemplate.Add("operator", "IN");
+                            conditionTemplate.Add("right_operand", $"({whenConditions[selectColumn][0]})");
+                            whereTemplate.Add("select_case", conditionTemplate.Render());
+                        }
                     }
                     if (ifStatementList.Count > 0 && ifStatementList[0].GetProperty("withinPUT") == "false")
                     {
@@ -949,12 +1057,6 @@ namespace FunloadTranslate
                         }
                     }
                     outputList = GetOutputValuesForSelect(outputValues, table, _stg, m204FileContainsRectypes, mainConditions);
-
-                    if(sortBySubstring == true)
-                    {
-                        Template sortedOpenTemplate = _stg.GetInstanceOf("select_statement_sorted_open");
-                        sb.Append(sortedOpenTemplate.Render());
-                    }
 
                     Template selectTemplate = _stg.GetInstanceOf("select_statement_outer");
                     selectTemplate.Add("output_list", outputList);
