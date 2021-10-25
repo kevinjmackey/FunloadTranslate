@@ -96,6 +96,11 @@ FROM
 
 >>
 
+sort_by_column(order_by) ::= <<
+ORDER BY <order_by:{e | <e.Column> <e.order>}; separator = ",">
+
+>>
+
 select_statement_sorted_close(order_by) ::= <<
 ) AS [SORTED]
 ORDER BY <order_by:{e | SUBSTRING([SORTED].[RESULT], <e.start>,<e.length>) <e.order>}; separator = ",">

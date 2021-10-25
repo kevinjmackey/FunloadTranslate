@@ -52,6 +52,11 @@ namespace FunloadTranslate
         public int occno { get; set; }
         public string outputString { get; set; }
     }
+    public class SortColumn
+    {
+        public string Column { get; set; }
+        public string order { get; set; }
+    }
     public class SortValue
     {
         public int start { get; set; }
@@ -83,7 +88,9 @@ namespace FunloadTranslate
         private List<VariableType> variables = new List<VariableType>();
         private List<OutputValue> outputList = new List<OutputValue>();
         private List<SortValue> sortValuesList = new List<SortValue>();
+        private List<SortColumn> sortColumnList = new List<SortColumn>();
         private bool sortBySubstring = false;
+        private bool sortByColumn = false;
         private string previousConjuction = "";
 
         public WriteFunloadSQL()
@@ -178,6 +185,7 @@ namespace FunloadTranslate
             m204FilesDictionary["SHPA"] = "SHP";
             m204FilesDictionary["SHPH"] = "SHP";
             m204FilesDictionary["SHPI"] = "SHP";
+            m204FilesDictionary["SHPS"] = "SHPS";
             m204FilesDictionary["TBL"] = "TBL";
             m204FilesDictionary["WGP"] = "WGP";
             m204FilesDictionary["WGPA"] = "WGP";
@@ -331,6 +339,10 @@ namespace FunloadTranslate
                     }
                 }
             }
+            foreach (UastNode node in _putStatementList)
+            {
+                node.AddProperty("rectype", string.Join(",", rectypes.Keys));
+            }
             return rectypes;
         }
         private List<M204FileDTO> GetM204Files(List<string> _fileGroups, FunloadMetadata _metadata)
@@ -422,6 +434,15 @@ namespace FunloadTranslate
                         args[0] = $"CONVERT(VARCHAR(8), {args[0].Replace("%", "@")}, 112)";
                     rhs = $"{sqlFunction}({args[0].Replace("%", "@")}, {args[1].Replace("%", "@")}, {args[2].Replace("%", "@")})";
                     break;
+                case "#TRANSLATE":
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append($"{sqlFunction}(");
+                    sb.Append($"{_function.Children[0].RawToken.Replace("%", "@")},");
+                    sb.Append($"{_function.Children[1].RawToken},");
+                    sb.Append($"{_function.Children[2].RawToken}");
+                    sb.Append(")");
+                    rhs = sb.ToString(); //Translate to REPLACE
+                    break;
             }
             return (_rhsDataType == "DATE" ? $"CONVERT(VARCHAR(8), {rhs}, 112)" : rhs);
         }
@@ -466,7 +487,7 @@ namespace FunloadTranslate
             if (_m204FileContainsRectypes == true && _table.Rectype != "No Rectype")
             {
                 result = new List<OutputValue>();
-                foreach(var o in _outputValues.Where(o => o.rectype == _table.Rectype))
+                foreach(var o in _outputValues.Where(o => o.rectype.Contains(_table.Rectype)))
                 {
                     if (o.outputType == "field")
                         if (_m204FileContainsRectypes == true && !o.name.EndsWith("RECTYPE"))
@@ -612,12 +633,20 @@ namespace FunloadTranslate
                     outputValue.position = i;
                     i++;
                 }
+                string[] typeArgs = { "" };
                 outputValue.dataType = putStatement.GetProperty("type");
                 outputValue.funout = putStatement.GetProperty("funout");
                 outputValue.rectype = (putStatement.HasProperty("rectype")? StringExtensions.ConvertPeriods(putStatement.GetProperty("rectype")) : "");
-                string[] typeArgs = putStatement.GetProperty("typeArgs").Replace("(", "").Replace(")", "").Split(",");
-                outputValue.length = int.Parse(typeArgs[0]);
-                if(putStatement.HasProperty("missingValue"))
+                if (putStatement.HasProperty("typeArgs"))
+                {
+                    typeArgs = putStatement.GetProperty("typeArgs").Replace("(", "").Replace(")", "").Split(",");
+                    outputValue.length = int.Parse(typeArgs[0]);
+                }
+                if (typeArgs.Length == 0)
+                {
+
+                }
+                if (putStatement.HasProperty("missingValue"))
                 {
                     outputValue.missingValue = putStatement.GetProperty("missingValue");
                 }
@@ -785,6 +814,16 @@ namespace FunloadTranslate
                     _whereClauseElements.AddLast(")");
             }
         }
+        private bool ConditionContainsRectype(UastNode _ifStatement, bool _m204FileContainsRectypes)
+        {
+            UastNode condition = new UastNode();
+            foreach(var child in _ifStatement.Children)
+            {
+                if (child.RawInternalType == "fl:Condition")
+                    condition = child;
+            }
+            return _m204FileContainsRectypes == true && condition.GetProperty("left_operand").Contains("RECTYPE") ? true : false;
+        }
         private void GetWHEREConditions(UastNode _ifStatement, MFDTableDTO _table, TemplateGroup _stg, bool _m204FileContainsRectypes, LinkedList<string> _whereClauseElements)
         {
             foreach(var child in _ifStatement.Children)
@@ -792,10 +831,12 @@ namespace FunloadTranslate
                 switch (child.RawInternalType)
                 {
                     case "fl:Conjunction":
-                        _whereClauseElements.AddLast($" {child.RawToken} ");
+                        if (_whereClauseElements.Count > 0)
+                            _whereClauseElements.AddLast($" {child.RawToken} ");
                         break;
                     case "fl:If":
-                        _whereClauseElements.AddLast($" AND ");
+                        if(!ConditionContainsRectype(_ifStatement, _m204FileContainsRectypes))
+                            _whereClauseElements.AddLast($" AND ");
                         GetWHEREConditions(child, _table, _stg, _m204FileContainsRectypes, _whereClauseElements);
                         break;
                     case "fl:Condition":
@@ -880,6 +921,26 @@ namespace FunloadTranslate
             }
             return result;
         }
+        private List<SortColumn> GetSortColumns(List<UastNode> _sortStatementList)
+        {
+            List<SortColumn> result = new List<SortColumn>();
+            foreach (UastNode sortStatement in _sortStatementList)
+            {
+                if (sortStatement.RawToken == "FIELDS" && int.TryParse(sortStatement.FirstChild().RawToken, out _) == false)
+                {
+                    sortByColumn = true;
+                    for (int i = 0; i < sortStatement.ChildCount; i = i + 2)
+                    {
+                        result.Add(new SortColumn()
+                        {
+                            Column = sortStatement.Children[i].RawToken.Replace(".","_"),
+                            order = (sortStatement.Children[i + 1].RawToken == "A" ? "ASC" : "DESC")
+                        });
+                    }
+                }
+            }
+            return result;
+        }
         private void WalkTheTree(UastNode _node)
         {
             switch (_node.RawInternalType)
@@ -938,7 +999,9 @@ namespace FunloadTranslate
             whenConditions.Clear();
             sortStatementList.Clear();
             sortValuesList.Clear();
+            sortColumnList.Clear();
             sortBySubstring = false;
+            sortByColumn = false;
 
             WalkTheTree(_jobNode);
 
@@ -968,6 +1031,7 @@ namespace FunloadTranslate
                 outputValues = GetOutputValues(putStatementList);
                 variables = GetVariables(_jobNode);
                 sortValuesList = GetSortValues(sortStatementList);
+                sortColumnList = GetSortColumns(sortStatementList);
             }
         }
         private void ProcessJob(string _headerText, UastNode _jobNode, string _outputFolder, TemplateGroup _stg)
@@ -1076,6 +1140,14 @@ namespace FunloadTranslate
                     {
                         whereTemplate.Add("where", mainConditions);
                         sb.Append(whereTemplate.Render());
+                    }
+                    if (sortByColumn == true)
+                    {
+                        foreach (SortColumn sortColumn in sortColumnList)
+                            sortColumn.Column = GetColumn(sortColumn.Column, table);
+                        Template sortedByTemplate = _stg.GetInstanceOf("sort_by_column");
+                        sortedByTemplate.Add("order_by", sortColumnList);
+                        sb.Append(sortedByTemplate.Render());
                     }
                     selectTemplate = _stg.GetInstanceOf("select_statement_outer_close");
                     selectTemplate.Add("table_number", tables);
