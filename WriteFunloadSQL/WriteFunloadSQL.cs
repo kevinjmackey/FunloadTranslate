@@ -23,6 +23,13 @@ namespace FunloadTranslate
         {
             return str.Replace(".", "_");
         }
+        public static string GetRepeatedCharacter(string _character, int _repeatCount)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < _repeatCount; i++)
+                sb.Append(_character);
+            return sb.ToString();
+        }
     }
     public class VariableType
     {
@@ -48,6 +55,8 @@ namespace FunloadTranslate
         public string rectype { get; set; }
         public string funout { get; set; }
         public string missingValue { get; set; }
+        public string formatString { get; set; }
+        public string alignment { get; set; }
         public bool occurs { get; set; }
         public int occno { get; set; }
         public string outputString { get; set; }
@@ -522,6 +531,13 @@ namespace FunloadTranslate
                 {
                     case "field":
                         output.value = GetColumn((output.name.Contains("(") == true ? StringExtensions.Left(output.name, output.name.IndexOf("(")) : output.name), _table);
+                        if (output.formatString != "")
+                        {
+                            Template formatTemplate = _stg.GetInstanceOf("format_function");
+                            formatTemplate.Add("column", output.value);
+                            formatTemplate.Add("format_string", output.formatString);
+                            output.value = formatTemplate.Render();
+                        }
                         output.dataType = GetColumnDataType((output.name.Contains("(") == true ? StringExtensions.Left(output.name, output.name.IndexOf("(")) : output.name), _table);
                         output.occurs = (output.value.StartsWith("[reoccur]") ? true : false);
                         output.occno = (output.occno > 0 ? output.occno : 0);
@@ -640,11 +656,30 @@ namespace FunloadTranslate
                 if (putStatement.HasProperty("typeArgs"))
                 {
                     typeArgs = putStatement.GetProperty("typeArgs").Replace("(", "").Replace(")", "").Split(",");
-                    outputValue.length = int.Parse(typeArgs[0]);
                 }
-                if (typeArgs.Length == 0)
+                else
                 {
-
+                    Array.Resize<string>(ref typeArgs, 3);
+                    int j = 0;
+                    foreach (var child in putStatement.Children)
+                    {
+                        if (child.RawInternalType == "fl:Argument" && j < 3)
+                        {
+                            typeArgs.SetValue(child.RawToken, j);
+                            j++;
+                        }
+                    }
+                }
+                outputValue.length = int.Parse(typeArgs[0].Replace("'",""));
+                if(typeArgs.Length > 1)
+                {
+                    outputValue.alignment = typeArgs[1].Replace("'", "");
+                    outputValue.formatString = StringExtensions.GetRepeatedCharacter(typeArgs[2].Replace("'", ""), outputValue.length);
+                }
+                else
+                {
+                    outputValue.alignment = "";
+                    outputValue.formatString = "";
                 }
                 if (putStatement.HasProperty("missingValue"))
                 {
