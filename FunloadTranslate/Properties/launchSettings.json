@@ -2,7 +2,7 @@
   "profiles": {
     "FunloadTranslate": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"D:\\projects\\YRC\\Translate Funloads\\Funload Source\\FunloadTest.txt\""
+      "commandLineArgs": "-i \"D:\\projects\\YRC\\Translate Funloads\\Funload Source\\FunloadCode10292021.txt\""
     }
   }
 }

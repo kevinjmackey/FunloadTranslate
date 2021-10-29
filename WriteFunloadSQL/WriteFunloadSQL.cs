@@ -112,6 +112,7 @@ namespace FunloadTranslate
         private void LoadM205FileDictionary()
         {
             m204FilesDictionary["BUS"] = "BUS";
+            m204FilesDictionary["BAC"] = "BAC";
             m204FilesDictionary["BSP"] = "BSP";
             m204FilesDictionary["BSRA"] = "BSR";
             m204FilesDictionary["BSRB"] = "BSR";
@@ -122,6 +123,7 @@ namespace FunloadTranslate
             m204FilesDictionary["BSRG"] = "BSR";
             m204FilesDictionary["BSRH"] = "BSR";
             m204FilesDictionary["BSRI"] = "BSR";
+            m204FilesDictionary["BSRJ"] = "BSR";
             m204FilesDictionary["BSRK"] = "BSR";
             m204FilesDictionary["BSRL"] = "BSR";
             m204FilesDictionary["BSRM"] = "BSR";
@@ -175,27 +177,79 @@ namespace FunloadTranslate
             m204FilesDictionary["COLC"] = "COLC";
             m204FilesDictionary["COLE"] = "COLE";
             m204FilesDictionary["COLM"] = "COLM";
+            m204FilesDictionary["CRNA"] = "CRN";
+            m204FilesDictionary["CRNB"] = "CRN";
+            m204FilesDictionary["CRNC"] = "CRN";
             m204FilesDictionary["CRND"] = "CRN";
+            m204FilesDictionary["CRNE"] = "CRN";
+            m204FilesDictionary["CRNF"] = "CRN";
+            m204FilesDictionary["CRNG"] = "CRN";
+            m204FilesDictionary["CRNH"] = "CRN";
             m204FilesDictionary["CRNI"] = "CRN";
+            m204FilesDictionary["CRNJ"] = "CRN";
+            m204FilesDictionary["CRNK"] = "CRN";
+            m204FilesDictionary["CRNL"] = "CRN";
+            m204FilesDictionary["CRNM"] = "CRN";
+            m204FilesDictionary["CRNN"] = "CRN";
+            m204FilesDictionary["CRNO"] = "CRN";
+            m204FilesDictionary["CRNP"] = "CRN";
+            m204FilesDictionary["CSR"] = "CSR";
+            m204FilesDictionary["CSVC"] = "CSVC";
             m204FilesDictionary["CUR"] = "CUR";
+            m204FilesDictionary["DXL"] = "DXL";
             m204FilesDictionary["ECP"] = "ECP";
             m204FilesDictionary["ECM"] = "ECM";
             m204FilesDictionary["EQP"] = "EQP";
             m204FilesDictionary["EQPSTAT"] = "EQPSTAT";
+            m204FilesDictionary["FAC"] = "FAC";
             m204FilesDictionary["GBL"] = "GBL";
+            m204FilesDictionary["GIF"] = "GIF";
             m204FilesDictionary["INV"] = "INV";
             m204FilesDictionary["INVB"] = "INV";
             m204FilesDictionary["INVC"] = "INV";
             m204FilesDictionary["INVCAFA"] = "INVCAF";
             m204FilesDictionary["INVCAFB"] = "INVCAF";
+            m204FilesDictionary["NAD"] = "NAD";
+            m204FilesDictionary["OSDA"] = "OSDA";
             m204FilesDictionary["OSDD"] = "OSDD";
             m204FilesDictionary["OSDE"] = "OSDE";
+            m204FilesDictionary["OSDN"] = "OSDN";
+            m204FilesDictionary["PCF"] = "PCF";
+            m204FilesDictionary["PCM"] = "PCM";
+            m204FilesDictionary["PMA"] = "PMA";
+            m204FilesDictionary["RIP"] = "RIP";
             m204FilesDictionary["RDWAPSY"] = "RDWAPSY";
+            m204FilesDictionary["RCS"] = "RCS";
+            m204FilesDictionary["RGN"] = "RGN";
+            m204FilesDictionary["RMT"] = "RMT";
+            m204FilesDictionary["RMTB"] = "RMT";
+            m204FilesDictionary["RMTC"] = "RMT";
+            m204FilesDictionary["RIP"] = "RIP";
+            m204FilesDictionary["SCHM"] = "SCHM";
             m204FilesDictionary["SHPA"] = "SHP";
+            m204FilesDictionary["SHPB"] = "SHP";
+            m204FilesDictionary["SHPC"] = "SHP";
+            m204FilesDictionary["SHPD"] = "SHP";
+            m204FilesDictionary["SHPE"] = "SHP";
+            m204FilesDictionary["SHPF"] = "SHP";
+            m204FilesDictionary["SHPG"] = "SHP";
             m204FilesDictionary["SHPH"] = "SHP";
             m204FilesDictionary["SHPI"] = "SHP";
+            m204FilesDictionary["SHPJ"] = "SHP";
+            m204FilesDictionary["SHPK"] = "SHP";
+            m204FilesDictionary["SHPL"] = "SHP";
+            m204FilesDictionary["SHPM"] = "SHP";
+            m204FilesDictionary["SHPN"] = "SHP";
+            m204FilesDictionary["SHPO"] = "SHP";
+            m204FilesDictionary["SHPP"] = "SHP";
             m204FilesDictionary["SHPS"] = "SHPS";
+            m204FilesDictionary["SVC"] = "SVC";
             m204FilesDictionary["TBL"] = "TBL";
+            m204FilesDictionary["TFA"] = "TFA";
+            m204FilesDictionary["TFI"] = "TFI";
+            m204FilesDictionary["TFIB"] = "TFI";
+            m204FilesDictionary["TFQ"] = "TFQ";
+            m204FilesDictionary["TFQB"] = "TFQ";
             m204FilesDictionary["WGP"] = "WGP";
             m204FilesDictionary["WGPA"] = "WGP";
             m204FilesDictionary["WGPB"] = "WGP";
@@ -213,7 +267,24 @@ namespace FunloadTranslate
             m204FilesDictionary["WGPN"] = "WGP";
             m204FilesDictionary["WGPO"] = "WGP";
             m204FilesDictionary["WGPP"] = "WGP";
+            m204FilesDictionary["WGPAPT"] = "WGPAPT";
+            m204FilesDictionary["WGPAUDI"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDD"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDC"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDB"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDA"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDH"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDG"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDF"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDE"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDP"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDO"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDN"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDM"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDL"] = "WGPAUD";
+            m204FilesDictionary["WGPAUDK"] = "WGPAUD";
             m204FilesDictionary["XORZ"] = "XORZ";
+            m204FilesDictionary["XORZLINK"] = "XORZLINK";
         }
         private void LoadConditionalOperatorsDictionary()
         {
@@ -577,7 +648,7 @@ namespace FunloadTranslate
                     case "variable":
                         Template outputVariableTemplate = _stg.GetInstanceOf("output_value");
                         outputVariableTemplate.Add("position", output.position);
-                        outputVariableTemplate.Add("value", output.value.Replace("%",""));
+                        outputVariableTemplate.Add("value", output.value.Replace("%","@"));
                         outputVariableTemplate.Add("length", output.length);
                         output.outputString = outputVariableTemplate.Render();
                         break;
@@ -670,11 +741,14 @@ namespace FunloadTranslate
                         }
                     }
                 }
-                outputValue.length = int.Parse(typeArgs[0].Replace("'",""));
+                outputValue.length = (typeArgs[0] == "" ? outputValue.length = -1 : int.Parse(typeArgs[0].Replace("'", "")));
                 if(typeArgs.Length > 1)
                 {
-                    outputValue.alignment = typeArgs[1].Replace("'", "");
-                    outputValue.formatString = StringExtensions.GetRepeatedCharacter(typeArgs[2].Replace("'", ""), outputValue.length);
+                    outputValue.alignment = (typeArgs[1] == null ? "" : typeArgs[1].Replace("'", ""));
+                    if (typeArgs.Length > 2)
+                        outputValue.formatString = (typeArgs[2] == null ? "" :StringExtensions.GetRepeatedCharacter(typeArgs[2].Replace("'", ""), outputValue.length));
+                    else
+                        outputValue.formatString = "";
                 }
                 else
                 {
@@ -692,6 +766,7 @@ namespace FunloadTranslate
                         case "fl:Constant":
                             outputValue.outputType = "constant";
                             outputValue.value = child.RawToken;
+                            outputValue.length = (outputValue.length == -1 ? child.RawToken.Replace("'", "").Length : outputValue.length);
                             outputValue.occurs = false;
                             outputValue.occno = -1;
                             break;
@@ -711,7 +786,7 @@ namespace FunloadTranslate
                                 outputValue.occno = -1;
                             }
                             break;
-                        case "fl:variable":
+                        case "fl:Variable":
                             outputValue.outputType = "variable";
                             outputValue.value = child.RawToken;
                             outputValue.name = child.RawToken;
