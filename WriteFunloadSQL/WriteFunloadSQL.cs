@@ -111,6 +111,7 @@ namespace FunloadTranslate
         }
         private void LoadM205FileDictionary()
         {
+            m204FilesDictionary["ASHB"] = "ASH";
             m204FilesDictionary["BUS"] = "BUS";
             m204FilesDictionary["BAC"] = "BAC";
             m204FilesDictionary["BSP"] = "BSP";
@@ -174,9 +175,11 @@ namespace FunloadTranslate
             m204FilesDictionary["CCS"] = "CCS";
             m204FilesDictionary["CIF"] = "CIF";
             m204FilesDictionary["CINV"] = "CINV";
+            m204FilesDictionary["COLA"] = "COLA";
             m204FilesDictionary["COLC"] = "COLC";
             m204FilesDictionary["COLE"] = "COLE";
             m204FilesDictionary["COLM"] = "COLM";
+            m204FilesDictionary["COLP"] = "COLP";
             m204FilesDictionary["CRNA"] = "CRN";
             m204FilesDictionary["CRNB"] = "CRN";
             m204FilesDictionary["CRNC"] = "CRN";
@@ -243,6 +246,17 @@ namespace FunloadTranslate
             m204FilesDictionary["SHPO"] = "SHP";
             m204FilesDictionary["SHPP"] = "SHP";
             m204FilesDictionary["SHPS"] = "SHPS";
+            m204FilesDictionary["SHPXA"] = "SHPX";
+            m204FilesDictionary["SLIA"] = "SLI";
+            m204FilesDictionary["SLIB"] = "SLI";
+            m204FilesDictionary["SLIC"] = "SLI";
+            m204FilesDictionary["SLID"] = "SLI";
+            m204FilesDictionary["SLIE"] = "SLI";
+            m204FilesDictionary["SLIF"] = "SLI";
+            m204FilesDictionary["SLIG"] = "SLI";
+            m204FilesDictionary["SLIH"] = "SLI";
+            m204FilesDictionary["SLIP"] = "SLI";
+            m204FilesDictionary["SLIO"] = "SLI";
             m204FilesDictionary["SVC"] = "SVC";
             m204FilesDictionary["TBL"] = "TBL";
             m204FilesDictionary["TFA"] = "TFA";
@@ -250,6 +264,14 @@ namespace FunloadTranslate
             m204FilesDictionary["TFIB"] = "TFI";
             m204FilesDictionary["TFQ"] = "TFQ";
             m204FilesDictionary["TFQB"] = "TFQ";
+            m204FilesDictionary["TWGA"] = "TWG";
+            m204FilesDictionary["TWGB"] = "TWG";
+            m204FilesDictionary["TWGC"] = "TWG";
+            m204FilesDictionary["TWGD"] = "TWG";
+            m204FilesDictionary["TWGG"] = "TWG";
+            m204FilesDictionary["TWGH"] = "TWG";
+            m204FilesDictionary["VTINFOA"] = "VTINFO";
+            m204FilesDictionary["VTINFOB"] = "VTINFO";
             m204FilesDictionary["WGP"] = "WGP";
             m204FilesDictionary["WGPA"] = "WGP";
             m204FilesDictionary["WGPB"] = "WGP";
@@ -322,6 +344,7 @@ namespace FunloadTranslate
             functions["FILENAME"] = "M204 File";
             functions["#DATEDIF"] = "DATEDIFF";
             functions["#ONEOF"] = "still to be worked out"; //Test for existence among a set of possibilities (like EXISTS or IN...likely in a WHERE context)
+            functions["#NUM2STR"] = "CAST";
         }
         private List<MFDTableDTO> GetMFDTables(FunloadMetadata _metadata, string _m204File, Dictionary<string, string> _rectypes, bool _rectypesInFile)
         {
@@ -515,13 +538,22 @@ namespace FunloadTranslate
                     rhs = $"{sqlFunction}({args[0].Replace("%", "@")}, {args[1].Replace("%", "@")}, {args[2].Replace("%", "@")})";
                     break;
                 case "#TRANSLATE":
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append($"{sqlFunction}(");
-                    sb.Append($"{_function.Children[0].RawToken.Replace("%", "@")},");
-                    sb.Append($"{_function.Children[1].RawToken},");
-                    sb.Append($"{_function.Children[2].RawToken}");
-                    sb.Append(")");
-                    rhs = sb.ToString(); //Translate to REPLACE
+                    StringBuilder sbT = new StringBuilder();
+                    sbT.Append($"{sqlFunction}(");
+                    sbT.Append($"{_function.Children[0].RawToken.Replace("%", "@")},");
+                    sbT.Append($"{_function.Children[1].RawToken},");
+                    sbT.Append($"{_function.Children[2].RawToken}");
+                    sbT.Append(")");
+                    rhs = sbT.ToString(); //Translate to REPLACE
+                    break;
+                case "#NUM2STR":
+                    StringBuilder sbN = new StringBuilder();
+                    sbN.Append($"{sqlFunction}(");
+                    sbN.Append($"{_function.Children[0].RawToken.Replace("%", "@").Replace(".", "_")}");
+                    sbN.Append(" AS VARCHAR(");
+                    sbN.Append($"{_function.Children[1].RawToken}");
+                    sbN.Append("))");
+                    rhs = sbN.ToString(); //Translate to CAST(<value> as VARCHAR(<len>)
                     break;
             }
             return (_rhsDataType == "DATE" ? $"CONVERT(VARCHAR(8), {rhs}, 112)" : rhs);

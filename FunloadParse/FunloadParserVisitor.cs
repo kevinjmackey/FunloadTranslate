@@ -129,6 +129,18 @@ public interface IFunloadParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFor_statement([NotNull] FunloadParser.For_statementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="FunloadParser.leave_for_statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLeave_for_statement([NotNull] FunloadParser.Leave_for_statementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="FunloadParser.leave_repeat_statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLeave_repeat_statement([NotNull] FunloadParser.Leave_repeat_statementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="FunloadParser.put_statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -200,6 +212,12 @@ public interface IFunloadParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitReady_statement([NotNull] FunloadParser.Ready_statementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="FunloadParser.repeat_statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitRepeat_statement([NotNull] FunloadParser.Repeat_statementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="FunloadParser.end_statement"/>.
 	/// </summary>

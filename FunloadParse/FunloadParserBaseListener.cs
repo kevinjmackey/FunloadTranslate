@@ -229,6 +229,30 @@ public partial class FunloadParserBaseListener : IFunloadParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFor_statement([NotNull] FunloadParser.For_statementContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="FunloadParser.leave_for_statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterLeave_for_statement([NotNull] FunloadParser.Leave_for_statementContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FunloadParser.leave_for_statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitLeave_for_statement([NotNull] FunloadParser.Leave_for_statementContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="FunloadParser.leave_repeat_statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterLeave_repeat_statement([NotNull] FunloadParser.Leave_repeat_statementContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FunloadParser.leave_repeat_statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitLeave_repeat_statement([NotNull] FunloadParser.Leave_repeat_statementContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="FunloadParser.put_statement"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -372,6 +396,18 @@ public partial class FunloadParserBaseListener : IFunloadParserListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitReady_statement([NotNull] FunloadParser.Ready_statementContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="FunloadParser.repeat_statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterRepeat_statement([NotNull] FunloadParser.Repeat_statementContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FunloadParser.repeat_statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitRepeat_statement([NotNull] FunloadParser.Repeat_statementContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="FunloadParser.end_statement"/>.
 	/// <para>The default implementation does nothing.</para>

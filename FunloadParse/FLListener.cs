@@ -560,54 +560,82 @@ namespace FunloadTranslate
                     _currentParent.AddChild(node);
 
                     FunloadParser.Conditional_expressionContext condition = (FunloadParser.Conditional_expressionContext)child;
-                    foreach(var grandChild in condition.children)
+                    if(condition.lhs != null)
                     {
-                        if(grandChild.GetType() == typeof(FunloadParser.Column_nameContext))
+                        var gc = condition.lhs;
+                        UastNode field = GetExistingField(gc.GetText().Replace(".", "_"));
+                        if (field.RawInternalType == "Unknown")
                         {
-                            UastNode field = GetExistingField(grandChild.GetText().Replace(".", "_"));
-                            if (field.RawInternalType == "Unknown")
-                            {
-                                uast.UastNode fields = GetFieldsCollection();
+                            uast.UastNode fields = GetFieldsCollection();
 
-                                field.Token = grandChild.GetText().Replace(".", "_");
-                                field.InternalType = "fl:Field";
-                                field.AddRole(Role.IDENTIFIER);
-                                field.Parent = fields;
-                                fields.AddChild(field);
-                            }
-                            if(!field.HasProperty("predicate"))
-                            {
-                                field.AddProperty("predicate", "true");
-                            }
-                            field = ParseOutOccurs(field, (FunloadParser.Column_nameContext)grandChild);
-                            node.AddProperty("left_operand", grandChild.GetText());
+                            field.Token = gc.GetText().Replace(".", "_");
+                            field.InternalType = "fl:Field";
+                            field.AddRole(Role.IDENTIFIER);
+                            field.Parent = fields;
+                            fields.AddChild(field);
                         }
-                        if (grandChild.GetType() == typeof(FunloadParser.Conditional_operatorContext))
+                        if (!field.HasProperty("predicate"))
                         {
-                            node.AddProperty("operator", grandChild.GetText());
+                            field.AddProperty("predicate", "true");
                         }
-                        if (grandChild.GetType() == typeof(FunloadParser.ConstantContext))
+                        field = ParseOutOccurs(field, (FunloadParser.Column_nameContext)gc);
+                        node.AddProperty("left_operand", gc.GetText());
+                    }
+                    if (condition.rhscol != null)
+                    {
+                        var gc = condition.rhscol;
+                        UastNode field = GetExistingField(gc.GetText().Replace(".", "_"));
+                        if (field.RawInternalType == "Unknown")
                         {
-                            node.AddProperty("right_operand", grandChild.GetText());
-                            if(node.GetProperty("left_operand").EndsWith("RECTYPE"))
-                            {
-                                _currentPrimaryConditions.CurrentRectype = grandChild.GetText().Replace("'", "");
-                                _currentPrimaryConditions.ComparisonOperator = node.GetProperty("operator");
-                                node.AddProperty("rectype", _currentPrimaryConditions.CurrentRectype);
+                            uast.UastNode fields = GetFieldsCollection();
 
-                            }
+                            field.Token = gc.GetText().Replace(".", "_");
+                            field.InternalType = "fl:Field";
+                            field.AddRole(Role.IDENTIFIER);
+                            field.Parent = fields;
+                            fields.AddChild(field);
                         }
-                        if (grandChild.GetType() == typeof(FunloadParser.VariableContext))
+                        if (!field.HasProperty("predicate"))
                         {
-                            node.AddProperty("right_operand", grandChild.GetText());
+                            field.AddProperty("predicate", "true");
                         }
-                        if(grandChild.GetType() == typeof(Antlr4.Runtime.Tree.TerminalNodeImpl))
+                        field = ParseOutOccurs(field, (FunloadParser.Column_nameContext)gc);
+                        node.AddProperty("right_operand", gc.GetText());
+                    }
+                    if (condition.lhsv != null || condition.lhvs != null)
+                    {
+                        var gc = (condition.lhsv ?? condition.lhvs);
+                        node.AddProperty("left_operand", gc.GetText());
+                    }
+                    if (condition.rhsv != null)
+                    {
+                        var gc = condition.rhsv;
+                        node.AddProperty("right_operand", gc.GetText());
+                    }
+                    foreach (var grandChild in condition.children)
+                    {
+                        if (grandChild.GetType() == typeof(Antlr4.Runtime.Tree.TerminalNodeImpl))
                         {
                             node.AddProperty((grandChild.GetText() == "(" ? "lparen" : "rparen"), grandChild.GetText());
                         }
                         if (grandChild.GetType() == typeof(FunloadParser.ContinuationContext))
                         {
                             continuation = true;
+                        }
+                        if (grandChild.GetType() == typeof(FunloadParser.Conditional_operatorContext))
+                        {
+                            node.AddProperty("operator", grandChild.GetText());
+                        }
+                    }
+                    if (condition.rhsc != null)
+                    {
+                        var gc = condition.rhsc;
+                        node.AddProperty("right_operand", gc.GetText());
+                        if (node.GetProperty("left_operand").EndsWith("RECTYPE"))
+                        {
+                            _currentPrimaryConditions.CurrentRectype = gc.GetText().Replace("'", "");
+                            _currentPrimaryConditions.ComparisonOperator = node.GetProperty("operator");
+                            node.AddProperty("rectype", _currentPrimaryConditions.CurrentRectype);
                         }
                     }
                 }
