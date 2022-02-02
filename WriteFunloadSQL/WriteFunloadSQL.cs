@@ -659,7 +659,8 @@ namespace FunloadTranslate
                             Template occursTemplate = _stg.GetInstanceOf("occurs_clause");
                             occursTemplate.Add("from", _table.FromCaluse.Replace("[base]","[ibase]"));
                             occursTemplate.Add("join", _table.JoinCaluse.Replace("[reoccur]", "[ireoccur]"));
-                            occursTemplate.Add("where", (_mainConditions.Length > 0 ? $"WHERE {_mainConditions.Replace("[base]", "[ibase]").Replace("[reoccur]", "[ireoccur]")} AND" : "WHERE"));
+                            occursTemplate.Add("where", "WHERE");
+                            //occursTemplate.Add("where", (_mainConditions.Length > 0 ? $"WHERE {_mainConditions.Replace("[base]", "[ibase]").Replace("[reoccur]", "[ireoccur]")} AND" : "WHERE"));
                             if (output.occno > 0)
                                 occursTemplate.Add("occno", output.occno);
                             else

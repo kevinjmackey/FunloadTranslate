@@ -61,7 +61,7 @@ occurs_clause(from, join, where, occno, value) ::= <<
 >>
 
 occurs_condition(reoccurTable, column, occno) ::= <<
-(SELECT <column> FROM [THB_View].[<reoccurTable>] AS [irroccur] WITH (NOLOCK) WHERE [base].[RECORD_KEY] = [ireoccur].[RECORD_KEY] AND [ireoccur].[OCCNO] = <occno>)
+(SELECT <column> FROM [THB_View].[<reoccurTable>] AS [ireoccur] WITH (NOLOCK) WHERE [base].[RECORD_KEY] = [ireoccur].[RECORD_KEY] AND [ireoccur].[OCCNO] = <occno>)
 
 >>
 
