@@ -174,63 +174,66 @@ namespace FunloadTranslate
             _currentParent = node;
 
             uast.UastNode variable = new uast.UastNode();
-            foreach (var child in context.children)
+            if (context.ChildCount > 0)
             {
-                if(child.GetType() == typeof(FunloadParser.VariableContext))
+                foreach (var child in context.children)
                 {
-                    variable = GetExistingVariable(child.GetText());
-                    if(variable.RawInternalType == "Unknown")
+                    if (child.GetType() == typeof(FunloadParser.VariableContext))
                     {
-                        variable.Token = child.GetText();
-                        variable.InternalType = "fl:Variable";
-                        variable.AddRole(Role.VARIABLE);
-                        uast.UastNode variables = GetVariablesCollection();
-                        variable.Parent = variables;
-                        variables.AddChild(variable);
+                        variable = GetExistingVariable(child.GetText());
+                        if (variable.RawInternalType == "Unknown")
+                        {
+                            variable.Token = child.GetText();
+                            variable.InternalType = "fl:Variable";
+                            variable.AddRole(Role.VARIABLE);
+                            uast.UastNode variables = GetVariablesCollection();
+                            variable.Parent = variables;
+                            variables.AddChild(variable);
+                        }
+                        _currentParent.AddChild(variable);
                     }
-                    _currentParent.AddChild(variable);
-                }
-                if (child.GetType() == typeof(FunloadParser.IdentifierContext))
-                {
-                    variable.AddProperty("value", child.GetText());
-                }
-                if (child.GetType() == typeof(FunloadParser.ConstantContext))
-                {
-                    variable.AddProperty("value", child.GetText());
-                }
-                if (child.GetType() == typeof(FunloadParser.Integer_valueContext))
-                {
-                    variable.AddProperty("value", child.GetText());
-                }
-                if (child.GetType() == typeof(FunloadParser.FunctionContext))
-                {
-                    if(child.GetText().StartsWith("#DATE"))
+                    if (child.GetType() == typeof(FunloadParser.IdentifierContext))
                     {
-                        possibleDataType = "DATE";
+                        variable.AddProperty("value", child.GetText());
                     }
-                    if (child.GetText().StartsWith("#SUBSTR"))
+                    if (child.GetType() == typeof(FunloadParser.ConstantContext))
                     {
-                        possibleDataType = "VARCHAR(255)";
+                        variable.AddProperty("value", child.GetText());
                     }
-                    if (child.GetText().StartsWith("#CONCAT"))
+                    if (child.GetType() == typeof(FunloadParser.Integer_valueContext))
                     {
-                        possibleDataType = "VARCHAR(255)";
+                        variable.AddProperty("value", child.GetText());
+                    }
+                    if (child.GetType() == typeof(FunloadParser.FunctionContext))
+                    {
+                        if (child.GetText().StartsWith("#DATE"))
+                        {
+                            possibleDataType = "DATE";
+                        }
+                        if (child.GetText().StartsWith("#SUBSTR"))
+                        {
+                            possibleDataType = "VARCHAR(255)";
+                        }
+                        if (child.GetText().StartsWith("#CONCAT"))
+                        {
+                            possibleDataType = "VARCHAR(255)";
+                        }
+                    }
+                    if (child.GetType() == typeof(FunloadParser.ExpressionContext))
+                    {
+                        variable.AddProperty("datatype", "int");
                     }
                 }
-                if (child.GetType() == typeof(FunloadParser.ExpressionContext))
+                if (possibleDataType == "")
                 {
-                    variable.AddProperty("datatype", "int");
+                    possibleDataType = "VARCHAR(255)";
                 }
+                if (!variable.HasProperty("datatype"))
+                {
+                    variable.AddProperty("datatype", possibleDataType);
+                }
+                node.AddProperty("operator", context.ChildCount> 1 ? context.GetChild(1).GetText(): "");
             }
-            if (possibleDataType == "")
-            {
-                possibleDataType = "VARCHAR(255)";
-            }
-            if (!variable.HasProperty("datatype"))
-            {
-                variable.AddProperty("datatype", possibleDataType);
-            }
-            node.AddProperty("operator", context.GetChild(1).GetText());
         }
         public override void ExitAssignment_statement([NotNull] FunloadParser.Assignment_statementContext context) 
         {
@@ -548,6 +551,9 @@ namespace FunloadTranslate
             {
                 continuation = false;
             }
+
+            if (context.ChildCount == 0)
+                return;
             foreach (var child in context.children)
             {
                 if(child.GetType() == typeof(FunloadParser.Conditional_expressionContext))
@@ -602,9 +608,14 @@ namespace FunloadTranslate
                         field = ParseOutOccurs(field, (FunloadParser.Column_nameContext)gc);
                         node.AddProperty("right_operand", gc.GetText());
                     }
-                    if (condition.lhsv != null || condition.lhvs != null)
+                    if (condition.lhsv != null)
                     {
                         var gc = (condition.lhsv ?? condition.lhvs);
+                        node.AddProperty("left_operand", gc.GetText());
+                    }
+                    if (condition.lhsc != null)
+                    {
+                        var gc = (condition.lhsc ?? condition.lhsc);
                         node.AddProperty("left_operand", gc.GetText());
                     }
                     if (condition.rhsv != null)

@@ -535,7 +535,7 @@ namespace FunloadTranslate
                     variable = GetExistingVariable(args[0].Replace("%", ""));
                     if (variable.datatype == "DATE")
                         args[0] = $"CONVERT(VARCHAR(8), {args[0].Replace("%", "@")}, 112)";
-                    rhs = $"{sqlFunction}({args[0].Replace("%", "@")}, {args[1].Replace("%", "@")}, {args[2].Replace("%", "@")})";
+                    rhs = $"{sqlFunction}({args[0].Replace("%", "@")}, {args[1].Replace("%", "@")})";
                     break;
                 case "#TRANSLATE":
                     StringBuilder sbT = new StringBuilder();
