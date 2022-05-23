@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using CommandLine;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -32,6 +33,8 @@ namespace FunloadTranslate
                 string outputDir = $"{Path.GetDirectoryName(Path.GetFullPath(inputFile))}{Path.DirectorySeparatorChar.ToString()}";
                 outputFile = $"{outputDir}{Path.GetFileNameWithoutExtension(inputFile)}.JSON";
             }
+            Console.WriteLine("Funload Translate Version: {0}",
+                typeof(FunloadTranslate).Assembly.GetName().Version);
             System.Console.WriteLine($"Input file: {inputFile} \nMetadata File: {outputFile}");
             System.Console.WriteLine($"Translation started at: {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}");
             FLParse flp = new FLParse();

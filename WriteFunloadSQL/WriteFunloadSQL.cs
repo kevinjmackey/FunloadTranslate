@@ -58,7 +58,7 @@ namespace FunloadTranslate
         public string formatString { get; set; }
         public string alignment { get; set; }
         public bool occurs { get; set; }
-        public int occno { get; set; }
+        public string occno { get; set; }
         public string outputString { get; set; }
     }
     public class SortColumn
@@ -174,12 +174,14 @@ namespace FunloadTranslate
             m204FilesDictionary["CCD"] = "CCD";
             m204FilesDictionary["CCS"] = "CCS";
             m204FilesDictionary["CIF"] = "CIF";
+            m204FilesDictionary["CLT"] = "CLT";
             m204FilesDictionary["CINV"] = "CINV";
             m204FilesDictionary["COLA"] = "COLA";
             m204FilesDictionary["COLC"] = "COLC";
             m204FilesDictionary["COLE"] = "COLE";
             m204FilesDictionary["COLM"] = "COLM";
             m204FilesDictionary["COLP"] = "COLP";
+            m204FilesDictionary["CRN"] = "CRN";
             m204FilesDictionary["CRNA"] = "CRN";
             m204FilesDictionary["CRNB"] = "CRN";
             m204FilesDictionary["CRNC"] = "CRN";
@@ -207,11 +209,13 @@ namespace FunloadTranslate
             m204FilesDictionary["FAC"] = "FAC";
             m204FilesDictionary["GBL"] = "GBL";
             m204FilesDictionary["GIF"] = "GIF";
+            m204FilesDictionary["IMGXX"] = "IMGX";
             m204FilesDictionary["INV"] = "INV";
             m204FilesDictionary["INVB"] = "INV";
             m204FilesDictionary["INVC"] = "INV";
             m204FilesDictionary["INVCAFA"] = "INVCAF";
             m204FilesDictionary["INVCAFB"] = "INVCAF";
+            m204FilesDictionary["MNFST"] = "MNFST";
             m204FilesDictionary["NAD"] = "NAD";
             m204FilesDictionary["OSDA"] = "OSDA";
             m204FilesDictionary["OSDD"] = "OSDD";
@@ -229,6 +233,7 @@ namespace FunloadTranslate
             m204FilesDictionary["RMTC"] = "RMT";
             m204FilesDictionary["RIP"] = "RIP";
             m204FilesDictionary["SCHM"] = "SCHM";
+            m204FilesDictionary["SHP"] = "SHP";
             m204FilesDictionary["SHPA"] = "SHP";
             m204FilesDictionary["SHPB"] = "SHP";
             m204FilesDictionary["SHPC"] = "SHP";
@@ -643,7 +648,7 @@ namespace FunloadTranslate
                         }
                         output.dataType = GetColumnDataType((output.name.Contains("(") == true ? StringExtensions.Left(output.name, output.name.IndexOf("(")) : output.name), _table);
                         output.occurs = (output.value.StartsWith("[reoccur]") ? true : false);
-                        output.occno = (output.occno > 0 ? output.occno : 0);
+                        output.occno = (output.occno != "No occno" ? output.occno : null);
                         if (output.occurs == false)
                         {
                             Template outputFieldTemplate = _stg.GetInstanceOf("output_value");
@@ -661,7 +666,7 @@ namespace FunloadTranslate
                             occursTemplate.Add("join", _table.JoinCaluse.Replace("[reoccur]", "[ireoccur]"));
                             occursTemplate.Add("where", "WHERE");
                             //occursTemplate.Add("where", (_mainConditions.Length > 0 ? $"WHERE {_mainConditions.Replace("[base]", "[ibase]").Replace("[reoccur]", "[ireoccur]")} AND" : "WHERE"));
-                            if (output.occno > 0)
+                            if (output.occno != null)
                                 occursTemplate.Add("occno", output.occno);
                             else
                                 occursTemplate.Add("value", output.value.Replace("[reoccur]", "[ireoccur]"));
@@ -670,7 +675,7 @@ namespace FunloadTranslate
                             outputReoccurTemplate.Add("position", output.position);
                             outputReoccurTemplate.Add("value", (output.dataType.StartsWith("DATE") ? AddDateFormat(output.value, _stg) : output.value).Replace("[reoccur]", "[ireoccur]"));
                             outputReoccurTemplate.Add("length", output.length);
-                            if (output.occno == 0)
+                            if (output.occno == null)
                                 outputReoccurTemplate.Add("top", "1");
                             if (output.missingValue.Length > 0)
                                 outputReoccurTemplate.Add("missing_value", output.missingValue);
@@ -801,7 +806,7 @@ namespace FunloadTranslate
                             outputValue.value = child.RawToken;
                             outputValue.length = (outputValue.length == -1 ? child.RawToken.Replace("'", "").Length : outputValue.length);
                             outputValue.occurs = false;
-                            outputValue.occno = -1;
+                            outputValue.occno = "No occno";
                             break;
                         case "fl:Field":
                             outputValue.outputType = "field";
@@ -811,12 +816,12 @@ namespace FunloadTranslate
                             if(child.HasProperty("occurs"))
                             {
                                 outputValue.occurs = true;
-                                outputValue.occno = int.Parse(child.GetProperty("occurs"));
+                                outputValue.occno = child.GetProperty("occurs");
                             }
                             else
                             {
                                 outputValue.occurs = false;
-                                outputValue.occno = -1;
+                                outputValue.occno = "No occno";
                             }
                             break;
                         case "fl:Variable":
@@ -825,19 +830,19 @@ namespace FunloadTranslate
                             outputValue.name = child.RawToken;
                             outputValue.missingValue = child.RawToken;
                             outputValue.occurs = false;
-                            outputValue.occno = -1;
+                            outputValue.occno = "No occno";
                             break;
                         case "fl:Recin":
                             outputValue.outputType = "recin";
                             outputValue.value = child.RawToken;
                             outputValue.occurs = false;
-                            outputValue.occno = -1;
+                            outputValue.occno = "No occno";
                             break;
                         case "fl:Filename":
                             outputValue.outputType = "filename";
                             outputValue.value = child.RawToken;
                             outputValue.occurs = false;
-                            outputValue.occno = -1;
+                            outputValue.occno = "No occno";
                             break;
                     }
                 }
