@@ -260,6 +260,12 @@ namespace FunloadTranslate
             m204FilesDictionary["SLIF"] = "SLI";
             m204FilesDictionary["SLIG"] = "SLI";
             m204FilesDictionary["SLIH"] = "SLI";
+            m204FilesDictionary["SLII"] = "SLI";
+            m204FilesDictionary["SLIJ"] = "SLI";
+            m204FilesDictionary["SLIK"] = "SLI";
+            m204FilesDictionary["SLIL"] = "SLI";
+            m204FilesDictionary["SLIM"] = "SLI";
+            m204FilesDictionary["SLIN"] = "SLI";
             m204FilesDictionary["SLIP"] = "SLI";
             m204FilesDictionary["SLIO"] = "SLI";
             m204FilesDictionary["SVC"] = "SVC";
